@@ -328,8 +328,10 @@ if (polyurethaneThickness !== 'None') {
 	// Gets applied on walls, roof, and floor
 	insulationSection.addPart({
 		name: 'Polyurethane',
-		qty: bd.roofSurfaceArea + bd.exteriorWallSurfaceArea + bd.floorSurfaceArea,
-		priceLookupKey: polyurethaneThickness,
+		qty: Math.ceil(
+			bd.roofSurfaceArea + bd.exteriorWallSurfaceArea + bd.floorSurfaceArea,
+		),
+		priceLookupKey: polyurethaneThickness + ' polyurethane',
 	})
 }
 
@@ -346,7 +348,7 @@ if (fiberglassThickness !== 'None') {
 	// Gets applied on walls and in ceiling
 	insulationSection.addPart({
 		name: 'Fiberglass',
-		qty: bd.floorSurfaceArea + bd.exteriorWallSurfaceArea,
+		qty: Math.ceil(bd.floorSurfaceArea + bd.exteriorWallSurfaceArea),
 		priceLookupKey: fiberglassThickness,
 	})
 }

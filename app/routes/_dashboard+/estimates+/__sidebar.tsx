@@ -62,7 +62,7 @@ export default function Sidebar({
                 </div>
 				<DrawerFooter className="pt-2">
 					<DrawerClose asChild>
-						<Button variant="outline">Cancel</Button>
+						<Button variant="outline">Done</Button>
 					</DrawerClose>
 				</DrawerFooter>
 			</DrawerContent>

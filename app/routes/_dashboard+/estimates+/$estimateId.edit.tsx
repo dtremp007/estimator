@@ -10,40 +10,32 @@ import {
 	redirect,
 	useFetcher,
 	useLoaderData,
+	useSearchParams,
 } from '@remix-run/react'
-import { EditIcon, LoaderCircle, Settings, Users } from 'lucide-react'
+import {
+	Calculator,
+	EditIcon,
+	LoaderCircle,
+	Settings,
+	Users,
+} from 'lucide-react'
 import React from 'react'
 import { useSpinDelay } from 'spin-delay'
-import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { Button } from '#app/components/ui/button.js'
 import { Checkbox } from '#app/components/ui/checkbox.js'
-import { Label } from '#app/components/ui/label.js'
-import { NativeSelect } from '#app/components/ui/native-select.js'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
+import {
+	listPricelists,
+	listTakeoffModels,
+} from '#app/utils/entities.server.js'
 import {
 	runAndSaveTakeoffModel,
 	runTakeoffModelSaveResults,
 } from '#app/utils/takeoff-model.server.js'
 import { RenderInput } from './__render-input'
 import SidebarCompoment from './__sidebar'
-
-const TakeoffModelQueryResultsSchema = z.array(
-	z.object({
-		id: z.string(),
-		name: z.string(),
-		isShared: z.coerce.string().transform(value => value === '1'),
-	}),
-)
-
-const PricelistsQueryResultsSchema = z.array(
-	z.object({
-		id: z.string(),
-		name: z.string(),
-		isShared: z.coerce.string().transform(value => value === '1'),
-	}),
-)
 
 export const handle = {
 	breadcrumb: 'Edit',
@@ -87,39 +79,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	invariantResponse(estimate, 'Not found', { status: 404 })
 
-	const modelsRaw = await prisma.$queryRaw`
-        SELECT tm.id, tm.name,
-               CASE
-                   WHEN c.entityId IS NOT NULL THEN 1
-                   ELSE 0
-               END AS isShared
-        FROM takeoffModel tm
-        LEFT JOIN collaboration c ON tm.id = c.entityId AND c.userId = ${userId} AND c.entity = 'takeoffModel'
-        WHERE tm.ownerId = ${userId} OR tm.id IN (
-            SELECT entityId
-            FROM collaboration
-            WHERE userId = ${userId} AND entity = 'takeoffModel'
-        )
-    `
-
-	const models = TakeoffModelQueryResultsSchema.parse(modelsRaw)
-
-	const pricelistsRaw = await prisma.$queryRaw`
-        SELECT p.id, p.name,
-            CASE
-                WHEN c.entityId IS NOT NULL THEN 1
-                ELSE 0
-            END AS isShared
-        FROM pricelist p
-        LEFT JOIN collaboration c ON p.id = c.entityId AND c.userId = ${userId} AND c.entity = 'pricelist'
-        WHERE p.ownerId = ${userId} OR p.id IN (
-            SELECT entityId
-            FROM collaboration
-            WHERE userId = ${userId} AND entity = 'pricelist'
-        )
-    `
-
-	const pricelists = PricelistsQueryResultsSchema.parse(pricelistsRaw)
+	const [models, pricelists] = await Promise.all([
+		listTakeoffModels(userId),
+		listPricelists(userId),
+	])
 
 	if (!estimate.model) {
 		return json({
@@ -275,9 +238,16 @@ export default function TakeoffInputSheet() {
 						{data.estimate.model.inputs.map(input => (
 							<RenderInput key={input.id} input={input} />
 						))}
-						<Button name="intent" value="submit-takeoff-values">
-							Submit
-						</Button>
+						<div className="flex w-full justify-end">
+							<Button
+								name="intent"
+								value="submit-takeoff-values"
+								className="flex items-center gap-3"
+							>
+								Calculate
+								<Calculator size={16} />
+							</Button>
+						</div>
 					</div>
 				</Form>
 			</div>
@@ -302,6 +272,7 @@ function EditName({ name }: { name?: string }) {
 		minDuration: 300,
 		delay: 0,
 	})
+	const [searchParams] = useSearchParams()
 
 	const inputRef = React.useRef<HTMLInputElement>(null)
 
@@ -327,6 +298,7 @@ function EditName({ name }: { name?: string }) {
 				name="name"
 				defaultValue={name}
 				autoComplete="off"
+				autoFocus={searchParams.has('focusNameInput')}
 				className="border-none bg-transparent px-0 text-2xl font-bold focus:outline-none focus:ring-0"
 			/>
 			{isSaving && <LoaderCircle className="mr-4 animate-spin" />}
@@ -354,30 +326,66 @@ async function applyConfigurations(estimateId: string, formData: FormData) {
 
 function SidebarContent() {
 	const data = useLoaderData<typeof loader>()
+	const fetcher = useFetcher()
+	const isSaving = useSpinDelay(fetcher.state === 'submitting', {
+		minDuration: 300,
+		delay: 0,
+	})
 
 	return (
 		<div className="">
-			<Form method="post" className="space-y-4">
-				<Label>
-					Select Model to Use
-					<div className="flex items-center space-x-2">
-						<NativeSelect
-							name="takeoffModelId"
-							defaultValue={data.estimate?.model?.id as string}
+			<fetcher.Form method="post" className="space-y-4">
+				<div className="flex flex-col gap-4">
+					{data.models.map(model => (
+						<div
+							key={model.id}
+							className="pointer-events-auto w-full max-w-sm cursor-pointer rounded-lg border border-border bg-background p-4 pt-2 text-[0.8125rem] leading-5 ring-ring transition-colors duration-100 ease-out hover:bg-muted/20 has-[:checked]:ring-2"
+							onClick={e =>
+								(
+									e.currentTarget?.querySelector(
+										`#${model.id}`,
+									) as HTMLInputElement
+								)?.click()
+							}
 						>
-							{data.models.map(model => (
-								<option key={model.id} value={model.id}>
-									{model.name}
-								</option>
-							))}
-						</NativeSelect>
-						<Button type="button" variant="ghost" asChild>
-							<Link to={`/takeoff-models/${data.estimate?.model?.id}`}>
-								<EditIcon />
-							</Link>
-						</Button>
-					</div>
-				</Label>
+							<div className="flex items-center justify-between">
+								<div className="font-medium text-foreground">{model.name}</div>
+								<input
+									id={model.id}
+									type="radio"
+									name="takeoffModelId"
+									value={model.id}
+									className="peer sr-only"
+									defaultChecked={data.estimate?.model?.id === model.id}
+								/>
+								<Button asChild variant="ghost" size="icon">
+									<Link
+										to={{
+											pathname: `/takeoff-models/${model.id}/code`,
+											search: new URLSearchParams({
+												goBackButton: 'Go back to estimate',
+											}).toString(),
+										}}
+									>
+										<EditIcon size={16} className="inline-block" />
+									</Link>
+								</Button>
+								<svg
+									className="ml-auto h-5 w-5 flex-none opacity-0 transition-opacity duration-300 ease-out peer-checked:opacity-100"
+									fill="none"
+								>
+									<path
+										fill-rule="evenodd"
+										clip-rule="evenodd"
+										d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z"
+										fill="currentColor"
+									></path>
+								</svg>
+							</div>
+							<p className="text-muted-foreground">{`Created by ${model.ownerName}`}</p>
+						</div>
+					))}
+				</div>
 				<h3 className="text-base font-bold">Pricelists</h3>
 				{data.pricelists.map(pricelist => (
 					<div className="flex items-center space-x-2" key={pricelist.id}>
@@ -401,11 +409,17 @@ function SidebarContent() {
 					</div>
 				))}
 				<div className="flex w-full justify-end pb-4">
-					<Button name="intent" value="apply-takeoff-configurations">
+					<Button
+						name="intent"
+						value="apply-takeoff-configurations"
+						disabled={isSaving}
+						className="flex items-center gap-2"
+					>
 						Apply
+						{isSaving && <LoaderCircle className="animate-spin" />}
 					</Button>
 				</div>
-			</Form>
+			</fetcher.Form>
 		</div>
 	)
 }

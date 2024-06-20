@@ -4,8 +4,15 @@ import {
 	json,
 	type ActionFunctionArgs,
 } from '@remix-run/node'
-import { Link, redirect, useFetcher, useLoaderData } from '@remix-run/react'
-import { Check, LoaderCircle } from 'lucide-react'
+import {
+	Link,
+	redirect,
+	useFetcher,
+	useLoaderData,
+	useNavigate,
+	useSearchParams,
+} from '@remix-run/react'
+import { ArrowLeft, Check, LoaderCircle } from 'lucide-react'
 import React from 'react'
 import { useSpinDelay } from 'spin-delay'
 import BasicTable from '#app/components/basic-table.js'
@@ -123,8 +130,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				inputs: true,
 			},
 		})
+        const requestUrl = new URL(request.url)
 
-		return redirect(`/takeoff-models/${_takeoffModel.id}`)
+		return redirect(`/takeoff-models/${_takeoffModel.id}${requestUrl.search}`)
 	}
 
 	const permissions = await requireUserWithPermission(
@@ -159,9 +167,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 export default function TakeoffModelIndex() {
 	const data = useLoaderData<typeof loader>()
+	const [searchParams] = useSearchParams()
+	const navigate = useNavigate()
 
 	return (
 		<div className="main-container space-y-4">
+			{searchParams.has('goBackButton') && (
+				<Button onClick={() => navigate(-1)} className='flex items-center gap-3'>
+                    <ArrowLeft size={16}/>
+					{searchParams.get('goBackButton')}
+				</Button>
+			)}
 			<TakeoffModelNameForm />
 			<BasicTable
 				title="Variables"

@@ -1,5 +1,11 @@
 import { Editor, type Monaco } from '@monaco-editor/react'
-import { useActionData, useSubmit } from '@remix-run/react'
+import {
+	useActionData,
+	useNavigate,
+	useSearchParams,
+	useSubmit,
+} from '@remix-run/react'
+import { ArrowLeft } from 'lucide-react'
 import React from 'react'
 import { Button } from '#app/components/ui/button.js'
 import typesFile from '#app/lib/takeoff/types.d.ts?raw'
@@ -16,6 +22,8 @@ export function ModelCodeEditor({ model }: ModelCodeEditorProps) {
 	const editorRef = React.useRef<Monaco['editor'] | null>(null)
 	const submit = useSubmit()
 	const actionData = useActionData<typeof action>()
+	const [searchParams] = useSearchParams()
+	const navigate = useNavigate()
 
 	React.useEffect(() => {
 		return () => {
@@ -80,7 +88,18 @@ export function ModelCodeEditor({ model }: ModelCodeEditorProps) {
 
 	return (
 		<>
-			<div className="flex justify-end p-4">
+			<div className="flex justify-end p-4 w-full">
+				{searchParams.has('goBackButton') && (
+					<Button
+						onClick={() => navigate(-1)}
+						className="flex items-center gap-3 mr-auto"
+                        variant='secondary'
+					>
+						<ArrowLeft size={16} />
+						{searchParams.get('goBackButton')}
+					</Button>
+				)}
+
 				<Button onClick={handleSave}>Save</Button>
 			</div>
 			<div>

@@ -21,13 +21,13 @@ export function createGenericName<T extends { name: string }>(
 	name: string,
 	list: T[],
 ) {
-	name = name.trim() + ' '
+	name = name.trim()
 
 	if (list.length === 0) return name
 
 	const names = list.map(item => item.name)
 	const nameNumbers = names.map(n => {
-        const number = parseInt(n.replace(name, ''))
+        const number = parseInt(n.replace(name + ' ', ''))
 		return isNaN(number) ? 1 : number
 	})
 	const maxNumber = Math.max(...nameNumbers)

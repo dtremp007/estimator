@@ -37,35 +37,43 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	if (!estimate) {
 		const name = await nameTheThing(userId, 'New Estimate', 'estimate')
-		const takeoffModel = await prisma.takeoffModel.findFirst({
-			select: {
-				id: true,
-			},
+
+		// Use pricelists and takeoffModel from the user's most recent estimate
+		const mostRecentEstimate = await prisma.estimate.findFirst({
 			where: {
 				ownerId: userId,
 			},
 			orderBy: {
-				updatedAt: 'desc',
+				createdAt: 'desc',
+			},
+			select: {
+				model: {
+					select: {
+						id: true,
+					},
+				},
+				prices: {
+					select: {
+						id: true,
+					},
+				},
 			},
 		})
 
-		const pricelists = await prisma.pricelist.findMany({
-			select: {
-				id: true,
-			},
-			where: {
-				ownerId: userId,
-			},
-		})
+		if (!mostRecentEstimate?.model) {
+			return redirect('/estimates/onboarding')
+		}
 
 		const newEstimate = await prisma.estimate.create({
 			data: {
 				ownerId: userId,
 				name,
 				status: 'draft',
-				takeoffModelId: takeoffModel?.id,
+				takeoffModelId: mostRecentEstimate?.model.id,
 				prices: {
-					connect: pricelists.map(pricelist => ({ id: pricelist.id })),
+					connect: mostRecentEstimate?.prices.map(price => ({
+						id: price.id,
+					})),
 				},
 			},
 		})
@@ -134,31 +142,29 @@ export default function Estimate() {
 							<SectionCard key={sectionName} name={sectionName}>
 								<DynamicTable
 									data={parts}
-									labelFormatter={ccase.capitalCase}
-									columns={
-										[
-											'name',
-											'qty',
-											{
-												key: 'pricePerUnit',
-												className: 'max-sm:hidden text-right',
-												format: value =>
-													value.toLocaleString('en-US', {
-														style: 'currency',
-														currency: 'USD',
-													}),
-											},
-											{
-												key: 'total',
-												className: 'text-right',
-												format: value =>
-													value.toLocaleString('en-US', {
-														style: 'currency',
-														currency: 'USD',
-													}),
-											},
-										] as const
-									}
+									formatLabel={ccase.capitalCase}
+									columns={[
+										'name',
+										'qty',
+										{
+											key: 'pricePerUnit',
+											className: 'max-sm:hidden text-right',
+											format: value =>
+												value.toLocaleString('en-US', {
+													style: 'currency',
+													currency: 'USD',
+												}),
+										},
+										{
+											key: 'total',
+											className: 'text-right',
+											format: value =>
+												value.toLocaleString('en-US', {
+													style: 'currency',
+													currency: 'USD',
+												}),
+										},
+									]}
 								/>
 							</SectionCard>
 						),
@@ -168,31 +174,29 @@ export default function Estimate() {
 					<SectionCard name="Materials">
 						<DynamicTable
 							data={data.estimate.results}
-							labelFormatter={ccase.capitalCase}
-							columns={
-								[
-									'priceLookupKey',
-									'qty',
-									{
-										key: 'pricePerUnit',
-										className: 'max-sm:hidden text-right',
-										format: value =>
-											value.toLocaleString('en-US', {
-												style: 'currency',
-												currency: 'USD',
-											}),
-									},
-									{
-										key: 'total',
-										className: 'text-right',
-										format: value =>
-											value.toLocaleString('en-US', {
-												style: 'currency',
-												currency: 'USD',
-											}),
-									},
-								] as const
-							}
+							formatLabel={ccase.capitalCase}
+							columns={[
+								'priceLookupKey',
+								'qty',
+								{
+									key: 'pricePerUnit',
+									className: 'max-sm:hidden text-right',
+									format: value =>
+										value.toLocaleString('en-US', {
+											style: 'currency',
+											currency: 'USD',
+										}),
+								},
+								{
+									key: 'total',
+									className: 'text-right',
+									format: value =>
+										value.toLocaleString('en-US', {
+											style: 'currency',
+											currency: 'USD',
+										}),
+								},
+							]}
 						/>
 					</SectionCard>
 				</TabsContent>

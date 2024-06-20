@@ -135,56 +135,60 @@ export default function EditVariable() {
 	})
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Variables</CardTitle>
-				<CardDescription>
-					These are the variables for this takeoff model
-				</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<Form method="post" {...getFormProps(form)}>
-					{data?.variable?.id && (
-						<input type="hidden" name="id" value={data.variable.id} />
-					)}
-					<div className="flex gap-4">
-						<Field
-							className="w-full"
-							labelProps={{ children: 'Name' }}
-							inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
-						/>
-						<Field
-							className="w-full pl-4"
-							labelProps={{ children: 'Value' }}
-							inputProps={{ ...getInputProps(fields.value, { type: 'text' }) }}
-						/>
-					</div>
-					<div className="w-1/2">
-						<SelectField
-							meta={fields.type}
-							label="Type"
-							options={[
-								{ label: 'String', value: 'string' },
-								{ label: 'Number', value: 'number' },
-								{ label: 'Boolean', value: 'boolean' },
-								{ label: 'JSON', value: 'object' },
-							]}
-							placeholder="Select a type"
-						/>
-					</div>
-					<ErrorList errors={form.errors} />
-					<div className="mt-4 flex justify-end gap-4">
+		<div className="main-container">
+			<Card>
+				<CardHeader>
+					<CardTitle>Variables</CardTitle>
+					<CardDescription>
+						These are the variables for this takeoff model
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<Form method="post" {...getFormProps(form)}>
 						{data?.variable?.id && (
-							<Button variant="destructive" name="intent" value="delete">
-								Delete
-							</Button>
+							<input type="hidden" name="id" value={data.variable.id} />
 						)}
-						<Button name="intent" value="update">
-							Update
-						</Button>
-					</div>
-				</Form>
-			</CardContent>
-		</Card>
+						<div className="flex gap-4">
+							<Field
+								className="w-full"
+								labelProps={{ children: 'Name' }}
+								inputProps={{ ...getInputProps(fields.name, { type: 'text' }) }}
+							/>
+							<Field
+								className="w-full pl-4"
+								labelProps={{ children: 'Value' }}
+								inputProps={{
+									...getInputProps(fields.value, { type: 'text' }),
+								}}
+							/>
+						</div>
+						<div className="w-1/2">
+							<SelectField
+								meta={fields.type}
+								label="Type"
+								options={[
+									{ label: 'String', value: 'string' },
+									{ label: 'Number', value: 'number' },
+									{ label: 'Boolean', value: 'boolean' },
+									{ label: 'JSON', value: 'object' },
+								]}
+								placeholder="Select a type"
+							/>
+						</div>
+						<ErrorList errors={form.errors} />
+						<div className="mt-4 flex justify-end gap-4">
+							{data?.variable?.id && (
+								<Button variant="destructive" name="intent" value="delete">
+									Delete
+								</Button>
+							)}
+							<Button name="intent" value="update">
+								Update
+							</Button>
+						</div>
+					</Form>
+				</CardContent>
+			</Card>
+		</div>
 	)
 }

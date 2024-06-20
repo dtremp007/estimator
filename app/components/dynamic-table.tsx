@@ -1,4 +1,5 @@
 import React from 'react'
+import _ from 'underscore'
 import {
 	Table,
 	TableBody,
@@ -18,16 +19,23 @@ interface Column<
 	extract?: (row: T) => any
 }
 
-interface DynamicTableProps<T extends Record<string, any>[]> {
+type ExtractedColumn<T extends Record<string, any>> = {
+	[K in Extract<keyof T, string>]: Column<T, K>
+}[Extract<keyof T, string>]
+
+interface DynamicTableProps<
+	T extends Record<string, any>[],
+	U extends T[number] = T[number],
+> {
 	data?: T
-	columns: (Column<T[number]> | Extract<keyof T[number], string>)[]
-	labelFormatter?: (key: string) => React.ReactNode
+	columns: (ExtractedColumn<U> | Extract<keyof U, string>)[]
+	formatLabel?: (key: string) => React.ReactNode
 }
 
 export function DynamicTable<T extends Record<string, any>[]>({
 	data,
 	columns,
-	labelFormatter,
+	formatLabel: labelFormatter,
 }: DynamicTableProps<T>) {
 	const _columns = React.useMemo(
 		() =>
@@ -39,9 +47,11 @@ export function DynamicTable<T extends Record<string, any>[]>({
 					} as Column<T[number]>
 				}
 
-                if (!column.label) {
-                    column.label = labelFormatter ? labelFormatter(column.key) : column.key
-                }
+				if (!column.label) {
+					column.label = labelFormatter
+						? labelFormatter(column.key)
+						: column.key
+				}
 
 				return column
 			}),
@@ -52,11 +62,13 @@ export function DynamicTable<T extends Record<string, any>[]>({
 		return (
 			<TableHeader>
 				<TableRow>
-					{_columns.map(({ key, label, format, extract, ...props }) => (
-						<TableHead key={key} {...props}>
-							{label}
-						</TableHead>
-					))}
+					{_columns
+						.map(obj => _.omit(obj, 'extract', 'format'))
+						.map(({ key, label, ...props }) => (
+							<TableHead key={key} {...props}>
+								{label}
+							</TableHead>
+						))}
 				</TableRow>
 			</TableHeader>
 		)

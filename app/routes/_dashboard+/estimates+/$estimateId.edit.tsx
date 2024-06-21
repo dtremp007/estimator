@@ -31,14 +31,13 @@ import {
 	listTakeoffModels,
 	logUserAction,
 } from '#app/utils/entities.server.js'
+import { requireUserWithPermission } from '#app/utils/permissions.server.js'
 import {
 	runAndSaveTakeoffModel,
 	runTakeoffModelSaveResults,
 } from '#app/utils/takeoff-model.server.js'
 import { RenderInput } from './__render-input'
 import SidebarCompoment from './__sidebar'
-import { makeTimings } from '#app/utils/timing.server.js'
-import { requireUserWithPermission } from '#app/utils/permissions.server.js'
 
 export const handle = {
 	breadcrumb: 'Edit',

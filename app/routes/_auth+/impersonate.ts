@@ -1,6 +1,6 @@
 import { invariant } from "@epic-web/invariant"
 import { type LoaderFunctionArgs, redirect, type ActionFunctionArgs } from "@remix-run/node"
-import { authenticator, getImpersonator, IMPERSONATOR_SESSION_KEY, sessionKey } from "#app/utils/auth.server.js"
+import { getImpersonator, IMPERSONATOR_SESSION_KEY, sessionKey } from "#app/utils/auth.server.js"
 import { prisma } from "#app/utils/db.server.js"
 import { requireAdmin } from "#app/utils/permissions.server.js"
 import { authSessionStorage } from "#app/utils/session.server.js"

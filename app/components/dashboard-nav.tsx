@@ -18,8 +18,8 @@ import {
 	DrawerTitle,
 } from '#app/components/ui/drawer'
 import { cn } from '#app/utils/misc.js'
-import { Button } from './ui/button'
 import { useUser } from '#app/utils/user.js'
+import { Button } from './ui/button'
 
 const navItems = [
 	{

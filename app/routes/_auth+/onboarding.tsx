@@ -126,7 +126,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export const meta: MetaFunction = () => {
-	return [{ title: 'Setup Estimator Account' }]
+	return [{ title: 'Setup ToopJetalt Account' }]
 }
 
 export default function SignupRoute() {

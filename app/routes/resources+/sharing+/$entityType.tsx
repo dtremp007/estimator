@@ -62,7 +62,6 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	invariantResponse(entityId, 'Entity not found', { status: 404 })
 	invariantResponse(entityType, 'Entity type not found', { status: 404 })
 
-
 	const collaborations = await getCollaborators(entityId, entityType)
 
 	return json({ collaborations })
@@ -121,7 +120,6 @@ export function SharingDialog({
 		if (!(fetcher.data as any)?.error?.message) {
 			if (!emailInputRef.current) return
 			emailInputRef.current.value = ''
-			emailInputRef.current.focus()
 		}
 	}, [fetcher.data])
 
@@ -158,8 +156,8 @@ export function SharingDialog({
 								key={collaboration.user.id}
 								className="flex items-center justify-between py-2"
 							>
-								<div>
-									<div className="flex justify-between">
+								<div className='w-full pr-4'>
+									<div className="flex w-full justify-between">
 										<span>{collaboration.user.name}</span>
 										<Badge>{collaboration.accessLevel}</Badge>
 									</div>

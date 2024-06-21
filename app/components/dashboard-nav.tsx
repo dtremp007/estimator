@@ -6,6 +6,7 @@ import {
 	Home,
 	ListChecks,
 	MenuIcon,
+    Users,
 } from 'lucide-react'
 import React from 'react'
 import {
@@ -18,28 +19,39 @@ import {
 } from '#app/components/ui/drawer'
 import { cn } from '#app/utils/misc.js'
 import { Button } from './ui/button'
+import { useUser } from '#app/utils/user.js'
 
 const navItems = [
 	{
 		icon: Home,
 		label: 'Dashboard',
 		href: '/dashboard',
+        role: 'user'
 	},
 	{
 		icon: Calculator,
 		label: 'Estimations',
 		href: '/estimates',
+        role: 'user'
 	},
 	{
 		icon: ListChecks,
 		label: 'Prices',
 		href: '/pricelists',
+        role: 'user'
 	},
 	{
 		icon: Box,
 		label: 'Models',
 		href: '/takeoff-models',
+        role: 'user'
 	},
+    {
+        icon: Users,
+        label: 'Users',
+        href: '/admin/users',
+        role: 'admin',
+    }
 ]
 
 interface DashboardProps {
@@ -51,6 +63,7 @@ export function DashboardNav({ className }: DashboardProps) {
 	const matches = useMatches()
 	const isDesktop = useMediaQuery('(min-width: 768px)')
 	const location = useLocation()
+    const user = useUser()
 
 	React.useEffect(() => {
 		if (!open && isDesktop) return
@@ -61,7 +74,9 @@ export function DashboardNav({ className }: DashboardProps) {
 
 	const Menu = (
 		<>
-			{navItems.map((item, index) => (
+			{navItems
+            .filter(item => user.roles.some(role => role.name === item.role))
+            .map((item, index) => (
 				<Link
 					key={index}
 					to={item.href}

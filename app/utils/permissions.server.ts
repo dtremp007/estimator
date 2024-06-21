@@ -131,7 +131,7 @@ export async function requireUserWithPermission(
 	}
 }
 
-export function assignedPermissionsToEntity<T extends Entity>(
+export function assignPermissionsToEntity<T extends Entity>(
     entity: T,
     details: Omit<PermissionDetails, 'userId'> & { userId?: string },
 ) {
@@ -171,4 +171,8 @@ export async function isUserAdmin(userId: string) {
 		},
 	})
 	return !!user
+}
+
+export async function requireAdmin(request: Request) {
+    return requireUserWithRole(request, 'admin')
 }

@@ -32,7 +32,7 @@ import { prisma } from '#app/utils/db.server.js'
 import 'highlight.js/styles/a11y-dark.css'
 import { nameTheThing } from '#app/utils/naming.server.js'
 import {
-	assignedPermissionsToEntity,
+	assignPermissionsToEntity,
 	requireUserWithPermission,
 } from '#app/utils/permissions.server.js'
 
@@ -141,7 +141,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		_takeoffModel,
 	)
 
-	const takeoffModel = assignedPermissionsToEntity(_takeoffModel, permissions)
+	const takeoffModel = assignPermissionsToEntity(_takeoffModel, permissions)
 
 	return json({
 		takeoffModel,

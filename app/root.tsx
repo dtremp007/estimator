@@ -40,7 +40,7 @@ import {
 import { Icon, href as iconsHref } from './components/ui/icon.tsx'
 import { EpicToaster } from './components/ui/sonner.tsx'
 import tailwindStyleSheetUrl from './styles/tailwind.css?url'
-import { getUserId, logout } from './utils/auth.server.ts'
+import { getImpersonator, getUserId, logout } from './utils/auth.server.ts'
 import { ClientHintCheck, getHints, useHints } from './utils/client-hints.tsx'
 import { prisma } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
@@ -78,8 +78,8 @@ export const links: LinksFunction = () => {
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
 	return [
-		{ title: data ? 'Estimator' : 'Error | Estimator' },
-		{ name: 'description', content: `Your own captain's log` },
+		{ title: data ? 'ToopJetalt' : 'Error | ToopJetalt' },
+		{ name: 'description', content: `Simplify estimates.` },
 	]
 }
 
@@ -120,12 +120,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		// them in the database. Maybe they were deleted? Let's log them out.
 		await logout({ request, redirectTo: '/' })
 	}
+
 	const { toast, headers: toastHeaders } = await getToast(request)
 	const honeyProps = honeypot.getInputProps()
+	const impersonator = (await getImpersonator(request))?.user
 
 	return json(
 		{
 			user,
+			impersonator,
 			requestInfo: {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
@@ -245,7 +248,7 @@ function App() {
 				<footer className="py-6 md:px-8 md:py-0">
 					<div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
 						<p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-							© {new Date().getFullYear()} Estimator
+							© {new Date().getFullYear()} ToopJetalt
 						</p>
 					</div>
 				</footer>
@@ -282,7 +285,7 @@ function Logo() {
 				<path d="M12 17l0 .01" />
 				<path d="M16 17l0 .01" />
 			</svg>
-			<span>Estimator</span>
+			<span>ToopJetalt</span>
 		</Link>
 	)
 }
@@ -302,6 +305,8 @@ function UserDropdown() {
 	const user = useUser()
 	const submit = useSubmit()
 	const formRef = useRef<HTMLFormElement>(null)
+	const { impersonator } = useLoaderData<typeof loader>()
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -325,6 +330,18 @@ function UserDropdown() {
 			</DropdownMenuTrigger>
 			<DropdownMenuPortal>
 				<DropdownMenuContent sideOffset={8} align="start">
+					{impersonator && (
+						<DropdownMenuItem asChild>
+							<Form action="/impersonate" method="POST">
+								<input type="hidden" name="intent" value="stop" />
+								<Button className="bg-white">
+									<Icon className="text-body-md" name="exit">
+										Stop Impersonating {user.username}
+									</Icon>
+								</Button>
+							</Form>
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem asChild>
 						<Link prefetch="intent" to="/settings/profile">
 							<Icon className="text-body-md" name="avatar">

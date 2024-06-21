@@ -29,6 +29,7 @@ import { prisma } from '#app/utils/db.server.ts'
 import {
 	listPricelists,
 	listTakeoffModels,
+	logUserAction,
 } from '#app/utils/entities.server.js'
 import {
 	runAndSaveTakeoffModel,
@@ -36,6 +37,8 @@ import {
 } from '#app/utils/takeoff-model.server.js'
 import { RenderInput } from './__render-input'
 import SidebarCompoment from './__sidebar'
+import { makeTimings } from '#app/utils/timing.server.js'
+import { requireUserWithPermission } from '#app/utils/permissions.server.js'
 
 export const handle = {
 	breadcrumb: 'Edit',
@@ -125,7 +128,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
 	switch (intent) {
 		case 'submit-takeoff-values':
-			return submitTakeoffValues(estimateId, formData)
+			return submitTakeoffValues(request, estimateId, formData)
 		case 'update-name':
 			return updateTakeoffModelName(estimateId, formData)
 		case 'apply-takeoff-configurations':
@@ -135,9 +138,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 }
 
-async function submitTakeoffValues(estimateId: string, formData: FormData) {
+async function submitTakeoffValues(
+	request: Request,
+	estimateId: string,
+	formData: FormData,
+) {
+	const start = performance.now()
 	const estimate = await prisma.estimate.findFirst({
 		select: {
+			id: true,
 			model: {
 				select: {
 					id: true,
@@ -166,9 +175,14 @@ async function submitTakeoffValues(estimateId: string, formData: FormData) {
 			id: estimateId,
 		},
 	})
+	invariantResponse(estimate, 'Not found', { status: 404 })
+	const { userId } = await requireUserWithPermission(
+		request,
+		'write:estimate',
+		estimate,
+	)
 
 	const takeoffModel = estimate?.model
-
 	invariantResponse(takeoffModel, 'Not found', { status: 404 })
 
 	await runTakeoffModelSaveResults(
@@ -177,6 +191,14 @@ async function submitTakeoffValues(estimateId: string, formData: FormData) {
 		estimate.prices,
 		formData,
 	)
+
+	logUserAction({
+		userId,
+		action: 'submit-takeoff-values',
+		entityId: estimateId,
+		entity: 'estimate',
+		duration: performance.now() - start,
+	})
 
 	return redirect(`/estimates/${estimateId}`)
 }
@@ -308,15 +330,15 @@ function EditName({ name }: { name?: string }) {
 
 async function applyConfigurations(estimateId: string, formData: FormData) {
 	const takeoffModelId = formData.get('takeoffModelId') as string
-	const pricelists = formData.getAll('pricelist') as string[]
-	console.log(pricelists)
+	const pricelistIds = formData.getAll('pricelistId') as string[]
+
 	await prisma.estimate.update({
 		where: { id: estimateId },
 		data: {
 			takeoffModelId,
 			prices: {
 				set: [],
-				connect: pricelists.map(pricelist => ({ id: pricelist })),
+				connect: pricelistIds.map(pricelistId => ({ id: pricelistId })),
 			},
 		},
 	})
@@ -358,18 +380,7 @@ function SidebarContent() {
 									className="peer sr-only"
 									defaultChecked={data.estimate?.model?.id === model.id}
 								/>
-								<Button asChild variant="ghost" size="icon">
-									<Link
-										to={{
-											pathname: `/takeoff-models/${model.id}/code`,
-											search: new URLSearchParams({
-												goBackButton: 'Go back to estimate',
-											}).toString(),
-										}}
-									>
-										<EditIcon size={16} className="inline-block" />
-									</Link>
-								</Button>
+
 								<svg
 									className="ml-auto h-5 w-5 flex-none opacity-0 transition-opacity duration-300 ease-out peer-checked:opacity-100"
 									fill="none"
@@ -385,27 +396,47 @@ function SidebarContent() {
 							<p className="text-muted-foreground">{`Created by ${model.ownerName}`}</p>
 						</div>
 					))}
+					<Button asChild variant="secondary">
+						<Link
+							to={{
+								pathname: `/takeoff-models/${data.estimate.model?.id}/code`,
+								search: new URLSearchParams({
+									goBackButton: 'Go back to estimate',
+								}).toString(),
+							}}
+						>
+							Edit Code
+							<EditIcon size={16} className="ml-3 inline-block" />
+						</Link>
+					</Button>
 				</div>
 				<h3 className="text-base font-bold">Pricelists</h3>
 				{data.pricelists.map(pricelist => (
-					<div className="flex items-center space-x-2" key={pricelist.id}>
-						<Checkbox
-							id={pricelist.id}
-							name="pricelist"
-							value={pricelist.id}
-							defaultChecked={data.estimate?.prices.some(
-								price => price.id === pricelist.id,
-							)}
-						/>
-						<label
-							htmlFor={pricelist.id}
-							className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-						>
-							{pricelist.name}
-							{pricelist.isShared && (
-								<Users size={16} className="ml-3 inline-block" />
-							)}
-						</label>
+					<div className="flex space-x-3" key={pricelist.id}>
+						<div className="flex h-6 items-center">
+							<Checkbox
+								id={pricelist.id}
+								name="pricelistId"
+								value={pricelist.id}
+								defaultChecked={data.estimate.prices.some(
+									price => price.id === pricelist.id,
+								)}
+							/>
+						</div>
+						<div>
+							<label
+								htmlFor={pricelist.id}
+								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+							>
+								{pricelist.name}
+								{pricelist.isShared && (
+									<Users size={16} className="ml-3 inline-block" />
+								)}
+								<p className="text-sm font-medium leading-none text-muted-foreground">
+									{pricelist.supplier}
+								</p>
+							</label>
+						</div>
 					</div>
 				))}
 				<div className="flex w-full justify-end pb-4">

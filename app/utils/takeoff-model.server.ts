@@ -44,6 +44,12 @@ export async function runAndSaveTakeoffModel(
 	const inputs = takeoffApi.inputs.getLookupHistory()
 	const variables = takeoffApi.variables.getLookupHistory()
 
+	if (inputs.length > 120 || variables.length > 120) {
+		throw new Error(
+			'There is a limit to how many inputs and variables can be saved. If you think you need more, please contact support.',
+		)
+	}
+
 	const newTakeoffModel = await prisma.takeoffModel.update({
 		where: { id: takeoffModel.id },
 		select: {
@@ -68,7 +74,7 @@ export async function runAndSaveTakeoffModel(
 						type: input.type,
 						props: input.props,
 						order: input.order,
-                        component: input.component,
+						component: input.component,
 					},
 					create: {
 						name: input.name,
@@ -77,7 +83,7 @@ export async function runAndSaveTakeoffModel(
 						defaultValue: input.defaultValue,
 						type: input.type,
 						props: input.props,
-                        component: input.component,
+						component: input.component,
 						order: input.order,
 					},
 				})),
@@ -144,6 +150,10 @@ export async function runTakeoffModelSaveResults(
 		})
 		.flat()
 
+	if (results.length > 120) {
+		throw new Error('There is a limit to how many results you can save. If you need more results, please contact support.')
+	}
+
 	const updatedFormData = takeoffApi.inputs.getLookupHistory().map(input => {
 		return {
 			name: input.name,
@@ -203,11 +213,11 @@ export async function runTakeoffModel(
 	const vmContext = vm.createContext(createContext(takeoffApi))
 
 	try {
-		vm.runInContext(takeoffModel.code, vmContext, {timeout: 2000})
+		vm.runInContext(takeoffModel.code, vmContext, { timeout: 2000 })
 	} catch (error: Error | any) {
 		takeoffApi.log(error.message)
-        const errors = takeoffApi.getLogs().join('\n')
-        throw new Error(errors)
+		const errors = takeoffApi.getLogs().join('\n')
+		throw new Error(errors)
 	}
 
 	return takeoffApi

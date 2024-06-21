@@ -45,7 +45,7 @@ export function SegmentedControl({
 							onChange={() => onInputChange(item.value, i)}
 							checked={value === item.value}
 						/>
-						<div className="cursor-pointer rounded px-2 py-2 text-center text-nowrap text-sm text-secondary-foreground/80 peer-checked:bg-secondary peer-checked:text-secondary-foreground peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring">
+						<div className="cursor-pointer rounded px-2 py-2 text-center text-nowrap text-sm text-secondary-foreground/80 peer-checked:bg-background peer-checked:text-foreground peer-checked:font-bold peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring">
 							{item.label}
 						</div>
 					</label>

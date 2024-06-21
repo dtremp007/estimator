@@ -31,5 +31,5 @@ export function createGenericName<T extends { name: string }>(
 		return isNaN(number) ? 1 : number
 	})
 	const maxNumber = Math.max(...nameNumbers)
-	return `${name}${maxNumber + 1}`.trim()
+	return `${name} ${maxNumber + 1}`.trim()
 }

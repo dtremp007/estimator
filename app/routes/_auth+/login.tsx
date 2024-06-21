@@ -197,7 +197,7 @@ export default function LoginPage() {
 }
 
 export const meta: MetaFunction = () => {
-	return [{ title: 'Login to Estimator' }]
+	return [{ title: 'Login to ToopJetalt' }]
 }
 
 export function ErrorBoundary() {

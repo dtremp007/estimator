@@ -1,5 +1,4 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { type SEOHandle } from '@nasa-gcn/remix-seo'
 import {
 	json,
 	redirect,
@@ -18,6 +17,7 @@ import { GeneralErrorBoundary } from '#app/components/error-boundary'
 import { Field } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
 import { Button } from '#app/components/ui/button.tsx'
+import { NativeSelect } from '#app/components/ui/native-select.js'
 import {
 	cache,
 	getAllCacheKeys,
@@ -32,8 +32,9 @@ import {
 import { useDebounce, useDoubleCheck } from '#app/utils/misc.tsx'
 import { requireUserWithRole } from '#app/utils/permissions.server.ts'
 
-export const handle: SEOHandle = {
+export const handle = {
 	getSitemapEntries: () => null,
+    breadcrumb: 'Cache Admin',
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -103,7 +104,7 @@ export default function CacheAdminRoute() {
 	}, 400)
 
 	return (
-		<div className="container">
+		<div className="main-container">
 			<h1 className="text-h1">Cache Admin</h1>
 			<Spacer size="2xs" />
 			<Form
@@ -135,7 +136,7 @@ export default function CacheAdminRoute() {
 						</div>
 					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-4">
+				<div className="flex items-center gap-4">
 					<Field
 						labelProps={{
 							children: 'Limit',
@@ -150,7 +151,7 @@ export default function CacheAdminRoute() {
 							placeholder: 'results limit',
 						}}
 					/>
-					<select name="instance" defaultValue={instance}>
+					<NativeSelect name="instance" defaultValue={instance}>
 						{Object.entries(data.instances).map(([inst, region]) => (
 							<option key={inst} value={inst}>
 								{[
@@ -167,7 +168,7 @@ export default function CacheAdminRoute() {
 									.join(' ')}
 							</option>
 						))}
-					</select>
+					</NativeSelect>
 				</div>
 			</Form>
 			<Spacer size="2xs" />

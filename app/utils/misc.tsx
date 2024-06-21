@@ -289,10 +289,21 @@ export async function downloadFile(url: string, retries: number = 0) {
 	}
 }
 
-export function formatListTimeAgo<T extends { updatedAt: Date }>(list: T[]) {
+export function formatEntityTimeAgo<
+	T extends { updatedAt: Date; createdAt: Date },
+>(entity: T) {
+	return {
+		...entity,
+		updatedAt: formatDistanceToNow(new Date(entity.updatedAt)),
+		createdAt: formatDistanceToNow(new Date(entity.createdAt)),
+	}
+}
+
+export function formatListTimeAgo<T extends { updatedAt: Date; createdAt: Date }>(list: T[]) {
 	return list.map(item => ({
 		...item,
 		updatedAt: formatDistanceToNow(new Date(item.updatedAt)),
+        createdAt: formatDistanceToNow(new Date(item.createdAt)),
 	}))
 }
 

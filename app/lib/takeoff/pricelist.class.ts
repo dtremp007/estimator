@@ -7,6 +7,9 @@ export const PricelistItemSchema = z.object({
     pricePerUnit: z.coerce.number(),
     currency: z.string(),
     category: z.string(),
+    width: z.coerce.number().optional(),
+    height: z.coerce.number().optional(),
+    length: z.coerce.number().optional(),
 })
 
 export type PricelistItem = z.infer<typeof PricelistItemSchema>

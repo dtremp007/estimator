@@ -50,11 +50,13 @@ export async function action({ request }: LoaderFunctionArgs) {
 		},
 	})
 
-    const searchParams = new URLSearchParams({
-        focusNameInput: 'true',
-    })
+	const searchParams = new URLSearchParams({
+		focusNameInput: 'true',
+	})
 
-    return redirect(`/estimates/${newEstimate.id}/edit?${searchParams.toString()}`)
+	return redirect(
+		`/estimates/${newEstimate.id}/edit?${searchParams.toString()}`,
+	)
 }
 
 export default function Onboarding() {
@@ -63,7 +65,7 @@ export default function Onboarding() {
 	return (
 		<Form
 			method="post"
-			className="main-container grid max-w-[60ch] auto-rows-min justify-items-start gap-4"
+			className="main-container grid max-w-[60ch] auto-rows-min justify-items-start gap-4 px-4"
 		>
 			<h2 className="text-lg font-semibold leading-none tracking-tight text-foreground">
 				Takeoff Models
@@ -132,21 +134,28 @@ export default function Onboarding() {
 			</p>
 			<div className="space-y-6">
 				{data.pricelists.map(pricelist => (
-					<div className="flex items-center space-x-3" key={pricelist.id}>
-						<Checkbox
-							id={pricelist.id}
-							name="pricelistId"
-							value={pricelist.id}
-						/>
-						<label
-							htmlFor={pricelist.id}
-							className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-						>
-							{pricelist.name}
-							{pricelist.isShared && (
-								<Users size={16} className="ml-3 inline-block" />
-							)}
-						</label>
+					<div className="flex space-x-3" key={pricelist.id}>
+						<div className="flex h-6 items-center">
+							<Checkbox
+								id={pricelist.id}
+								name="pricelistId"
+								value={pricelist.id}
+							/>
+						</div>
+						<div>
+							<label
+								htmlFor={pricelist.id}
+								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+							>
+								{pricelist.name}
+								{pricelist.isShared && (
+									<Users size={16} className="ml-3 inline-block" />
+								)}
+								<p className="text-sm font-medium leading-none text-muted-foreground">
+									{pricelist.supplier}
+								</p>
+							</label>
+						</div>
 					</div>
 				))}
 			</div>

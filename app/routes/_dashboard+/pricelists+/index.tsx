@@ -183,7 +183,7 @@ export default function Pricelists() {
 }
 
 async function handleCSVUpload(request: Request, formData: FormData) {
-    const userId = await requireUserWithPermission(request, 'create:pricelist')
+	const userId = await requireUserWithPermission(request, 'create:pricelist')
 
 	const file = formData.get('pricelist')
 	const name = formData.get('name') as string
@@ -225,7 +225,7 @@ async function handleCSVUpload(request: Request, formData: FormData) {
 	return redirect(`/pricelists/${newPricelist.id}`)
 }
 
-function CSVUploadDialog() {
+export function CSVUploadDialog() {
 	const actionData = useActionData<typeof action>()
 
 	return (
@@ -236,22 +236,26 @@ function CSVUploadDialog() {
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle>Upload Pricelist</DialogTitle>
-					<DialogDescription>
-						Upload a new pricelist to add to your collection. Must be in CSV
-						format.
-						<br />
-						Here are the columns that are required:
-						<ul className="list-inside list-disc">
-							<li>Category</li>
-							<li>Name</li>
-							<li>Unit Type</li>
-							<li>Price Per Unit</li>
-							<li>Currency</li>
+					<DialogDescription className="space-y-3 text-left">
+						<p>
+							Upload a new pricelist to add to your collection. Must be in CSV
+							format.
+						</p>
+						<p>Here are the columns that are required, marked with *</p>
+						<ul className="list-inside list-disc ml-4 space-y-1">
+							<li>Category *</li>
+							<li>Name *</li>
+							<li>Unit Type *</li>
+							<li>Price Per Unit *</li>
+							<li>Currency *</li>
+							<li>Width</li>
+							<li>Height</li>
+							<li>Length</li>
 						</ul>
 					</DialogDescription>
 					<pre className="text-red-500">{actionData?.error?.message}</pre>
 				</DialogHeader>
-				<Form method="post" encType="multipart/form-data">
+				<Form method="post" encType="multipart/form-data" action='/pricelists?index'>
 					<input type="hidden" name="intent" value="upload" />
 					<div className="grid gap-4 py-4">
 						<div className="grid grid-cols-4 items-center gap-4">

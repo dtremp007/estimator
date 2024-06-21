@@ -4,7 +4,7 @@ import { Calculator } from 'lucide-react'
 import { Button } from '#app/components/ui/button.js'
 import { type logos } from './logos/logos.ts'
 
-export const meta: MetaFunction = () => [{ title: 'Estimator' }]
+export const meta: MetaFunction = () => [{ title: 'ToopJetalt' }]
 
 // Tailwind Grid cell classes lookup
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -33,15 +33,13 @@ export default function Index() {
 					<Calculator className="h-16 w-16 text-primary" />
 					<h1
 						data-heading
-						className="mt-8 animate-slide-top text-4xl font-medium text-foreground [animation-delay:0.3s] [animation-fill-mode:backwards] md:text-5xl xl:mt-4 xl:animate-slide-left xl:text-6xl xl:[animation-delay:0.8s] xl:[animation-fill-mode:backwards]"
+						className="mt-8 text-4xl font-medium text-foreground"
 					>
-						<a href="https://www.epicweb.dev/stack">
-							This an early release of the estimator app
-						</a>
+						This an early release of the ToopJetalt App
 					</h1>
 					<p
 						data-paragraph
-						className="mt-6 animate-slide-top text-xl/7 text-muted-foreground [animation-fill-mode:backwards] [animation-delay:0.8s] xl:mt-8 xl:animate-slide-left xl:text-xl/6 xl:leading-10 xl:[animation-fill-mode:backwards] xl:[animation-delay:1s]"
+						className="mt-6 text-xl/7 text-muted-foreground"
 					>
 						Things might be broken. I am working towards a v0.1.0 realease. You
 						can try it and report any issues{' '}

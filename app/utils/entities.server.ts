@@ -5,7 +5,7 @@ const ListTakeoffModelsSchema = z.array(
 	z.object({
 		id: z.string(),
 		name: z.string(),
-        ownerName: z.string(),
+		ownerName: z.string(),
 		isShared: z.coerce.string().transform(value => value === '1'),
 	}),
 )
@@ -35,13 +35,14 @@ const ListPriclistsSchema = z.array(
 	z.object({
 		id: z.string(),
 		name: z.string(),
+        supplier: z.string(),
 		isShared: z.coerce.string().transform(value => value === '1'),
 	}),
 )
 
 export async function listPricelists(userId: string) {
 	const pricelistsRaw = await prisma.$queryRaw`
-        SELECT p.id, p.name,
+        SELECT p.id, p.name, p.supplier,
             CASE
                 WHEN c.entityId IS NOT NULL THEN 1
                 ELSE 0
@@ -55,4 +56,31 @@ export async function listPricelists(userId: string) {
         )
     `
 	return ListPriclistsSchema.parse(pricelistsRaw)
+}
+
+export async function logUserAction({
+	userId,
+	entity,
+	entityId,
+	action,
+    duration,
+	data,
+}: {
+	userId: string
+	entity: string
+	entityId: string
+	action: string
+    duration?: number
+	data?: Record<string, any>
+}) {
+	await prisma.userAction.create({
+		data: {
+			userId,
+			entity,
+			entityId,
+			action,
+            duration,
+			data: data ? JSON.stringify(data) : undefined,
+		},
+	})
 }

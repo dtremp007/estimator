@@ -24,7 +24,7 @@ import {
 	TableRow,
 } from '#app/components/ui/table'
 import { prisma } from '#app/utils/db.server'
-import { assignedPermissionsToEntity, requireUserWithPermission } from '#app/utils/permissions.server.js'
+import { assignPermissionsToEntity, requireUserWithPermission } from '#app/utils/permissions.server.js'
 
 export const handle = {
 	breadcrumb: 'Pricelist',
@@ -51,7 +51,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		_pricelist,
 	)
 
-    const pricelist = assignedPermissionsToEntity(_pricelist, permissions)
+    const pricelist = assignPermissionsToEntity(_pricelist, permissions)
 
 	return json({ pricelist })
 }

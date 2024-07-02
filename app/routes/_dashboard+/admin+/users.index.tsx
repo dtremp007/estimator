@@ -4,7 +4,6 @@ import { DynamicTable } from '#app/components/dynamic-table.js'
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardHeader,
 	CardTitle,
 } from '#app/components/ui/card'
@@ -32,8 +31,7 @@ export default function Users() {
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle>Card Title</CardTitle>
-				<CardDescription>Card Description</CardDescription>
+				<CardTitle>Users</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<DynamicTable

@@ -36,7 +36,13 @@ export class PriceLookupTable implements LookupTable<PricelistLookupHistoryEntry
 		})
 	}
 
-	get(name: string, defaultValue: Price = { value: 0, currency: '' }) {
+	get(name: string, defaultValue: PricelistItem = {
+        name: name,
+        unitType: 'unit',
+        pricePerUnit: 0,
+        currency: 'MXN',
+        category: 'Other',
+    }) {
 		const item = this.table.get(name)
 
         this.addToLookupHistory({
@@ -48,10 +54,7 @@ export class PriceLookupTable implements LookupTable<PricelistLookupHistoryEntry
 			return defaultValue
 		}
 
-		return {
-			value: item.pricePerUnit,
-			currency: item.currency,
-		}
+		return item
 	}
 
     getCategoryItems(category: string) {

@@ -32,13 +32,13 @@ export class EstimateSection {
 		priceLookupKey: string
 	}) {
 		const price = this.prices.get(priceLookupKey)
-		const total = price.value * qty
+		const total = price.pricePerUnit * qty
 
 		this.parts.push({
 			name,
 			qty,
 			priceLookupKey,
-			pricePerUnit: price.value,
+			pricePerUnit: price.pricePerUnit,
 			total,
 			currency: price.currency,
 		})

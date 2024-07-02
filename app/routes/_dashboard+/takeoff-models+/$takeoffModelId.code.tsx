@@ -16,7 +16,7 @@ export const handle = {
 }
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
-	const userId = await requireUserId(request)
+	await requireUserId(request)
 	const takeoffModel = await prisma.takeoffModel.findFirst({
 		select: {
 			id: true,
@@ -25,7 +25,6 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		},
 		where: {
 			id: params.takeoffModelId,
-			ownerId: userId,
 		},
 	})
 	invariantResponse(takeoffModel, 'Not found', { status: 404 })

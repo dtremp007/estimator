@@ -310,10 +310,40 @@ electricalSection.addPart({
 	priceLookupKey: '4" LED',
 })
 
+insertHeading('Windows and Doors', 'Enter the number of each type')
+const interiorDoors = getCount('Number of Interior Doors')
+const windows = getCategoryItems('windows')
+
+const windowsAndDoorsSection = createSection('Windows and Doors')
+
+const exteriorDoors = 1
+
+let windowSqft = 0
+let windowEdges = 0
+const doorsSqft = (36 * 82 * (interiorDoors + exteriorDoors)) / 144
+
+for (const window of windows) {
+	const count = getCount(window.name)
+	if (count > 0) {
+		const area = window.width * window.height
+		if (!isNaN(area)) {
+			windowSqft += area * count
+			windowEdges += (window.width + window.height) * 2 * count
+		}
+
+		windowsAndDoorsSection.addPart({
+			name: window.name,
+			qty: count,
+			priceLookupKey: window.name,
+		})
+	}
+}
+windowSqft /= 144
+windowEdges /= 12
+// const exteriorDoors = getCount('Number of Exterior Doors')
+
 insertHeading('Insulation', 'Enter the insulation type and thickness')
 const insulationSection = createSection('Insulation')
-
-// TODO: Subtracts windows and doors
 
 const polyurethaneOptions = ['3/4"', '1"', '1 1/2"', '2"', 'None']
 const polyurethaneThickness = getUserInput('polyurethaneThickness', '1"', {
@@ -329,7 +359,11 @@ if (polyurethaneThickness !== 'None') {
 	insulationSection.addPart({
 		name: 'Polyurethane',
 		qty: Math.ceil(
-			bd.roofSurfaceArea + bd.exteriorWallSurfaceArea + bd.floorSurfaceArea,
+			bd.roofSurfaceArea +
+				bd.exteriorWallSurfaceArea +
+				bd.floorSurfaceArea -
+				windowSqft -
+				doorsSqft,
 		),
 		priceLookupKey: polyurethaneThickness + ' polyurethane',
 	})
@@ -344,11 +378,15 @@ const fiberglassThickness = getUserInput('fiberglassThickness', 'R11', {
 	},
 })
 
+const interiorCorners = getCount('Number of Interior Corners')
+
 if (fiberglassThickness !== 'None') {
 	// Gets applied on walls and in ceiling
 	insulationSection.addPart({
 		name: 'Fiberglass',
-		qty: Math.ceil(bd.floorSurfaceArea + bd.exteriorWallSurfaceArea),
+		qty: Math.ceil(
+			bd.floorSurfaceArea + bd.exteriorWallSurfaceArea - windowSqft - doorsSqft,
+		),
 		priceLookupKey: fiberglassThickness,
 	})
 }
@@ -367,7 +405,12 @@ drywallSection.addPart({
 })
 
 // TODO redimix cubeta
-// TODO 90 degree corner bead
+
+drywallSection.addPart({
+	name: 'Corner Bead',
+	qty: Math.ceil(interiorCorners + windowEdges / 8),
+	priceLookupKey: 'esquinero 90°',
+})
 
 drywallSection.addPart({
 	name: 'Sanding Sponge',
@@ -421,20 +464,16 @@ flooringSection.addPart({
 	priceLookupKey: 'rug',
 })
 
-insertHeading('Windows and Doors', 'Enter the number of each type')
-const interiorDoors = getCount('Number of Interior Doors')
-// const exteriorDoors = getCount('Number of Exterior Doors')
-
 const interiorSection = createSection('Interior')
 
 // Add six hinges per closet door
-interiorSection.addPart({
+windowsAndDoorsSection.addPart({
 	name: 'Hinges',
 	qty: interiorDoors * 3 + closets * 6,
 	priceLookupKey: 'door hinges',
 })
 
-interiorSection.addPart({
+windowsAndDoorsSection.addPart({
 	name: 'Knobs',
 	qty: interiorDoors,
 	priceLookupKey: 'door knobs',

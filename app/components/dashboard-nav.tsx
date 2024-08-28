@@ -98,20 +98,20 @@ export function DashboardNav({ className }: DashboardProps) {
 
 	if (isDesktop) {
 		return (
-			<div
+			<aside
 				className={cn(
 					'sticky top-14 hidden h-screen w-[250px] border-r border-border pt-6 sm:block',
 					className,
 				)}
 			>
 				<nav className="grid items-start px-4 text-sm font-medium">{Menu}</nav>
-			</div>
+			</aside>
 		)
 	}
 
 	return (
 		<>
-			<div className="fixed bottom-8 right-8 z-50">
+			<div className="fixed bottom-8 right-8 z-50  ">
 				<Button onClick={() => setOpen(true)}>
 					<MenuIcon />
 				</Button>

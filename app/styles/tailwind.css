@@ -77,6 +77,21 @@
 
 		--ring: 217.2 32.6% 60%;
 	}
+
+    /* Print styles */
+    @media print {
+        aside, nav, footer, header, button {
+            display: none !important;
+        }
+
+        @page { margin: 0; }
+
+        .main-container {
+            margin: 0;
+            max-width: 100%;
+            margin-bottom: 0 !important;
+        }
+    }
 }
 
 @layer components {

@@ -62,10 +62,10 @@ export default function DashboardRoute() {
 		.filter(Boolean)
 
 	return (
-		<div className="flex min-h-screen border-b">
+		<div className="flex min-h-screen border-b print:border-none">
 			<DashboardNav />
 			<div className="dashboard-content">
-				<Breadcrumb className="breadcrumbs ml-4 mt-6">
+				<Breadcrumb className="breadcrumbs ml-4 mt-6  ">
 					<BreadcrumbList>
 						{breadcrumbs.map((breadcrumb, i, arr) => {
 							if (i === arr.length - 1) {

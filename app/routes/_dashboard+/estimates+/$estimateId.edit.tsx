@@ -16,12 +16,12 @@ import {
 	Calculator,
 	EditIcon,
 	LoaderCircle,
-	Settings,
 	Users,
 } from 'lucide-react'
 import React from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
+import { SidebarLayout } from '#app/components/sidebar-layout.js'
 import { Button } from '#app/components/ui/button.js'
 import { Checkbox } from '#app/components/ui/checkbox.js'
 import { requireUserId } from '#app/utils/auth.server.ts'
@@ -37,7 +37,6 @@ import {
 	runTakeoffModelSaveResults,
 } from '#app/utils/takeoff-model.server.js'
 import { RenderInput } from './__render-input'
-import SidebarCompoment from './__sidebar'
 
 export const handle = {
 	breadcrumb: 'Edit',
@@ -204,56 +203,28 @@ async function submitTakeoffValues(
 
 export default function TakeoffInputSheet() {
 	const data = useLoaderData<typeof loader>()
-	const [open, setOpen] = React.useState(false)
 
-	const Sidebar = (
-		<SidebarCompoment
-			title="Configuration"
-			description="Configure the takeoff model."
-			open={open}
-			onOpenChange={setOpen}
-		>
-			<SidebarContent />
-		</SidebarCompoment>
-	)
-
-	if (!data.estimate?.model) {
+	const MissingTakeoffModel = () => {
 		return (
-			<>
-				<div className="main relative mb-20 mt-16 px-4">
-					<Button
-						variant="ghost"
-						className="absolute -top-24 right-1"
-						onClick={() => setOpen(!open)}
-					>
-						<Settings />
-					</Button>
-					<div className="space-y-4">
-						<EditName name={data.estimate?.name} />
-						<div className="flex flex-col items-center gap-4">
-							<div className="text-center">No takeoff model found</div>
-							<Button className="m-auto" asChild>
-								<Link to="/takeoff-models/new">Setup one up</Link>
-							</Button>
-						</div>
-					</div>
-				</div>
-				{Sidebar}
-			</>
+			<div className="flex flex-col items-center gap-4">
+				<div className="text-center">No takeoff model found</div>
+				<Button className="m-auto" asChild>
+					<Link to="/takeoff-models/new">Setup one up</Link>
+				</Button>
+			</div>
 		)
 	}
 
 	return (
-		<>
-			<div className="main relative mb-20 mt-16 px-4">
-				<Button
-					variant="ghost"
-					className="absolute -top-24 right-1"
-					onClick={() => setOpen(!open)}
-				>
-					<Settings />
-				</Button>
-				<EditName name={data.estimate?.name} />
+		<SidebarLayout
+			title="Configuration"
+			description="Configure the takeoff model."
+			sidebarContent={<SidebarContent />}
+		>
+			<EditName name={data.estimate?.name} />
+			{!data.estimate.model ? (
+				<MissingTakeoffModel />
+			) : (
 				<Form method="post">
 					<div className="m-auto max-w-2xl space-y-4">
 						{data.estimate.model.inputs.map(input => (
@@ -271,9 +242,8 @@ export default function TakeoffInputSheet() {
 						</div>
 					</div>
 				</Form>
-			</div>
-			{Sidebar}
-		</>
+			)}
+		</SidebarLayout>
 	)
 }
 

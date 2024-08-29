@@ -20,6 +20,7 @@ model User {
     updatedAt DateTime @updatedAt
 
     image        UserImage?
+    logoImages   LogoImage[]
     password     Password?
     roles        Role[]
     sessions     Session[]
@@ -268,9 +269,10 @@ model TakeoffModel {
 
     teams Team[]
 
-    inputs    CustomInputElement[]
-    variables CustomVariable[]
-    estimate  Estimate[]
+    inputs         CustomInputElement[]
+    variables      CustomVariable[]
+    estimate       Estimate[]
+    printTemplates PrintTemplate[]
 }
 
 model CustomInputElement {
@@ -396,4 +398,36 @@ model Subscription {
     cancelAtPeriodEnd  Boolean  @default(false)
     createdAt          DateTime @default(now())
     updatedAt          DateTime @updatedAt
+}
+
+model PrintTemplate {
+    id           String @id @default(cuid())
+    name         String
+    companyName  String
+    companyInfo  String
+    bodyTemplate String
+    greeting     String
+
+    logoImage      LogoImage?   @relation(fields: [logoImageId], references: [id])
+    logoImageId    String?
+    takeoffModel   TakeoffModel @relation(fields: [takeoffModelId], references: [id], onDelete: Cascade)
+    takeoffModelId String
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+
+    @@index([takeoffModelId])
+}
+
+model LogoImage {
+    id          String  @id @default(cuid())
+    altText     String?
+    contentType String
+    blob        Bytes
+
+    createdAt     DateTime        @default(now())
+    updatedAt     DateTime        @updatedAt
+    PrintTemplate PrintTemplate[]
+
+    User          User?           @relation(fields: [userId], references: [id])
+    userId        String?
 }

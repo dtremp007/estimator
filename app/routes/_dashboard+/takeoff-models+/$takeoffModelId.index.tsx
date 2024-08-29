@@ -12,10 +12,11 @@ import {
 	useNavigate,
 	useSearchParams,
 } from '@remix-run/react'
-import { ArrowLeft, Check, LoaderCircle } from 'lucide-react'
+import { ArrowLeft, Check, LoaderCircle, PlusCircle } from 'lucide-react'
 import React from 'react'
 import { useSpinDelay } from 'spin-delay'
 import BasicTable from '#app/components/basic-table.js'
+import { DeleteEntityBtn } from '#app/components/delete-entity-btn.js'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.js'
 import { Button } from '#app/components/ui/button.js'
 import {
@@ -30,6 +31,7 @@ import { Input } from '#app/components/ui/input.js'
 import { TableCell, TableRow } from '#app/components/ui/table'
 import { prisma } from '#app/utils/db.server.js'
 import 'highlight.js/styles/a11y-dark.css'
+import { formatListTimeAgo } from '#app/utils/misc.js'
 import { nameTheThing } from '#app/utils/naming.server.js'
 import {
 	assignPermissionsToEntity,
@@ -128,12 +130,25 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			include: {
 				variables: true,
 				inputs: true,
+				printTemplates: true,
 			},
 		})
-        const requestUrl = new URL(request.url)
+		const requestUrl = new URL(request.url)
 
 		return redirect(`/takeoff-models/${_takeoffModel.id}${requestUrl.search}`)
 	}
+
+	const printTemplates = await prisma.printTemplate.findMany({
+		where: {
+			takeoffModelId: takeoffModelId,
+		},
+		select: {
+			id: true,
+			name: true,
+			updatedAt: true,
+			createdAt: true,
+		},
+	})
 
 	const permissions = await requireUserWithPermission(
 		request,
@@ -145,6 +160,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	return json({
 		takeoffModel,
+        printTemplates: formatListTimeAgo(printTemplates),
 	})
 }
 
@@ -160,6 +176,8 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return updateTakeoffModelName(takeoffModelId, formData)
 		case 'update-inputs-order':
 			return updateInputsOrder(takeoffModelId, formData)
+		case 'printTemplate.delete':
+			return deletePrintTemplate(takeoffModelId, formData)
 	}
 
 	return null
@@ -173,8 +191,11 @@ export default function TakeoffModelIndex() {
 	return (
 		<div className="main-container space-y-4">
 			{searchParams.has('goBackButton') && (
-				<Button onClick={() => navigate(-1)} className='flex items-center gap-3'>
-                    <ArrowLeft size={16}/>
+				<Button
+					onClick={() => navigate(-1)}
+					className="flex items-center gap-3"
+				>
+					<ArrowLeft size={16} />
 					{searchParams.get('goBackButton')}
 				</Button>
 			)}
@@ -216,8 +237,47 @@ export default function TakeoffModelIndex() {
 					</Button>
 				</CardFooter>
 			</Card>
+			<BasicTable
+				title="Print Templates"
+				headers={['Name', 'Updated', 'Delete']}
+				description="Manage print templates for this takeoff model."
+				actionButton={
+					<Button asChild className="text-nowrap">
+						<Link to="templates/new">
+							<PlusCircle className="mr-2 h-4 w-4" />
+							New Template
+						</Link>
+					</Button>
+				}
+			>
+				{data.printTemplates.map(template => (
+					<TableRow key={template.id}>
+						<TableCell className="font-medium">
+							<Link to={`templates/${template.id}`} className="hover:underline">
+								{template.name}
+							</Link>
+						</TableCell>
+						<TableCell>{template.updatedAt} ago</TableCell>
+						<TableCell>
+							<DeleteEntityBtn
+								entityId={template.id}
+								entityType="printTemplate"
+							/>
+						</TableCell>
+					</TableRow>
+				))}
+			</BasicTable>
 		</div>
 	)
+}
+
+async function deletePrintTemplate(takeoffModelId: string, formData: FormData) {
+	const printTemplateId = formData.get('id') as string
+	await prisma.printTemplate.delete({
+		where: { id: printTemplateId, takeoffModelId },
+	})
+
+	return null
 }
 
 async function updateTakeoffModelName(

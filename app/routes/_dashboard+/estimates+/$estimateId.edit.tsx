@@ -12,18 +12,20 @@ import {
 	useLoaderData,
 	useSearchParams,
 } from '@remix-run/react'
-import {
-	Calculator,
-	EditIcon,
-	LoaderCircle,
-	Users,
-} from 'lucide-react'
+import { Calculator, EditIcon, LoaderCircle, Users } from 'lucide-react'
 import React from 'react'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { SidebarLayout } from '#app/components/sidebar-layout.js'
 import { Button } from '#app/components/ui/button.js'
 import { Checkbox } from '#app/components/ui/checkbox.js'
+import { ScrollArea } from '#app/components/ui/scroll-area.js'
+import {
+	Tabs,
+	TabsList,
+	TabsTrigger,
+	TabsContent,
+} from '#app/components/ui/tabs'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import {
@@ -221,28 +223,30 @@ export default function TakeoffInputSheet() {
 			description="Configure the takeoff model."
 			sidebarContent={<SidebarContent />}
 		>
-			<EditName name={data.estimate?.name} />
-			{!data.estimate.model ? (
-				<MissingTakeoffModel />
-			) : (
-				<Form method="post">
-					<div className="m-auto max-w-2xl space-y-4">
-						{data.estimate.model.inputs.map(input => (
-							<RenderInput key={input.id} input={input} />
-						))}
-						<div className="flex w-full justify-end">
-							<Button
-								name="intent"
-								value="submit-takeoff-values"
-								className="flex items-center gap-3"
-							>
-								Calculate
-								<Calculator size={16} />
-							</Button>
+			<div className="m-auto mb-20 mt-16 max-w-2xl px-4">
+				<EditName name={data.estimate?.name} />
+				{!data.estimate.model ? (
+					<MissingTakeoffModel />
+				) : (
+					<Form method="post">
+						<div className="space-y-4">
+							{data.estimate.model.inputs.map(input => (
+								<RenderInput key={input.id} input={input} />
+							))}
+							<div className="flex w-full justify-end">
+								<Button
+									name="intent"
+									value="submit-takeoff-values"
+									className="flex items-center gap-3"
+								>
+									Calculate
+									<Calculator size={16} />
+								</Button>
+							</div>
 						</div>
-					</div>
-				</Form>
-			)}
+					</Form>
+				)}
+			</div>
 		</SidebarLayout>
 	)
 }
@@ -324,90 +328,103 @@ function SidebarContent() {
 	})
 
 	return (
-		<div className="">
+		<ScrollArea className="pb-4 pr-4 md:h-[calc(100vh-152px)]">
 			<fetcher.Form method="post" className="space-y-4">
-				<div className="flex flex-col gap-4">
-					{data.models.map(model => (
-						<div
-							key={model.id}
-							className="pointer-events-auto w-full max-w-sm cursor-pointer rounded-lg border border-border bg-background p-4 pt-2 text-[0.8125rem] leading-5 ring-ring transition-colors duration-100 ease-out hover:bg-muted/20 has-[:checked]:ring-2"
-							onClick={e =>
-								(
-									e.currentTarget?.querySelector(
-										`#${model.id}`,
-									) as HTMLInputElement
-								)?.click()
-							}
-						>
-							<div className="flex items-center justify-between">
-								<div className="font-medium text-foreground">{model.name}</div>
-								<input
-									id={model.id}
-									type="radio"
-									name="takeoffModelId"
-									value={model.id}
-									className="peer sr-only"
-									defaultChecked={data.estimate?.model?.id === model.id}
-								/>
-
-								<svg
-									className="ml-auto h-5 w-5 flex-none opacity-0 transition-opacity duration-300 ease-out peer-checked:opacity-100"
-									fill="none"
+				<Tabs defaultValue="takeoff-models">
+					<TabsList>
+						<TabsTrigger value="takeoff-models">Takeoff Models</TabsTrigger>
+						<TabsTrigger value="pricelists">Pricelists</TabsTrigger>
+					</TabsList>
+					<TabsContent value="takeoff-models">
+						<div className="mt-4 flex flex-col gap-4 px-2">
+							{data.models.map(model => (
+								<div
+									key={model.id}
+									className="pointer-events-auto max-w-sm cursor-pointer rounded-lg border border-border bg-background p-4 pt-2 text-[0.8125rem] leading-5 ring-ring transition-colors duration-100 ease-out hover:bg-muted/20 has-[:checked]:ring-2"
+									onClick={e =>
+										(
+											e.currentTarget?.querySelector(
+												`#${model.id}`,
+											) as HTMLInputElement
+										)?.click()
+									}
 								>
-									<path
-										fill-rule="evenodd"
-										clip-rule="evenodd"
-										d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z"
-										fill="currentColor"
-									></path>
-								</svg>
-							</div>
-							<p className="text-muted-foreground">{`Created by ${model.ownerName}`}</p>
+									<div className="flex items-center justify-between">
+										<div className="font-medium text-foreground">
+											{model.name}
+										</div>
+										<input
+											id={model.id}
+											type="radio"
+											name="takeoffModelId"
+											value={model.id}
+											className="peer sr-only"
+											defaultChecked={data.estimate?.model?.id === model.id}
+										/>
+
+										<svg
+											className="ml-auto h-5 w-5 flex-none opacity-0 transition-opacity duration-300 ease-out peer-checked:opacity-100"
+											fill="none"
+										>
+											<path
+												fill-rule="evenodd"
+												clip-rule="evenodd"
+												d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4Z"
+												fill="currentColor"
+											></path>
+										</svg>
+									</div>
+									<p className="text-muted-foreground">{`Created by ${model.ownerName}`}</p>
+								</div>
+							))}
+							<Button asChild variant="secondary">
+								<Link
+									to={{
+										pathname: `/takeoff-models/${data.estimate.model?.id}/code`,
+										search: new URLSearchParams({
+											goBackButton: 'Go back to estimate',
+										}).toString(),
+									}}
+								>
+									Edit Code
+									<EditIcon size={16} className="ml-3 inline-block" />
+								</Link>
+							</Button>
 						</div>
-					))}
-					<Button asChild variant="secondary">
-						<Link
-							to={{
-								pathname: `/takeoff-models/${data.estimate.model?.id}/code`,
-								search: new URLSearchParams({
-									goBackButton: 'Go back to estimate',
-								}).toString(),
-							}}
-						>
-							Edit Code
-							<EditIcon size={16} className="ml-3 inline-block" />
-						</Link>
-					</Button>
-				</div>
-				<h3 className="text-base font-bold">Pricelists</h3>
-				{data.pricelists.map(pricelist => (
-					<div className="flex space-x-3" key={pricelist.id}>
-						<div className="flex h-6 items-center">
-							<Checkbox
-								id={pricelist.id}
-								name="pricelistId"
-								value={pricelist.id}
-								defaultChecked={data.estimate.prices.some(
-									price => price.id === pricelist.id,
-								)}
-							/>
+					</TabsContent>
+					<TabsContent value="pricelists">
+						<div className="space-y-4">
+							{data.pricelists.map(pricelist => (
+								<div className="flex space-x-3" key={pricelist.id}>
+									<div className="flex h-6 items-center">
+										<Checkbox
+											id={pricelist.id}
+											name="pricelistId"
+											value={pricelist.id}
+											defaultChecked={data.estimate.prices.some(
+												price => price.id === pricelist.id,
+											)}
+										/>
+									</div>
+									<div>
+										<label
+											htmlFor={pricelist.id}
+											className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+										>
+											{pricelist.name}
+											{pricelist.isShared && (
+												<Users size={16} className="ml-3 inline-block" />
+											)}
+											<p className="text-sm font-medium leading-none text-muted-foreground">
+												{pricelist.supplier}
+											</p>
+										</label>
+									</div>
+								</div>
+							))}
 						</div>
-						<div>
-							<label
-								htmlFor={pricelist.id}
-								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-							>
-								{pricelist.name}
-								{pricelist.isShared && (
-									<Users size={16} className="ml-3 inline-block" />
-								)}
-								<p className="text-sm font-medium leading-none text-muted-foreground">
-									{pricelist.supplier}
-								</p>
-							</label>
-						</div>
-					</div>
-				))}
+					</TabsContent>
+				</Tabs>
 				<div className="flex w-full justify-end pb-4">
 					<Button
 						name="intent"
@@ -420,7 +437,7 @@ function SidebarContent() {
 					</Button>
 				</div>
 			</fetcher.Form>
-		</div>
+		</ScrollArea>
 	)
 }
 

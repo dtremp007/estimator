@@ -62,7 +62,7 @@ export default function DashboardRoute() {
 		.filter(Boolean)
 
 	return (
-		<div className="flex min-h-screen border-b print:border-none">
+		<div className="flex min-h-[calc(100vh-56px)] border-b print:border-none">
 			<DashboardNav />
 			<div className="dashboard-content">
 				<Breadcrumb className="breadcrumbs ml-4 mt-6  ">

@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs, json, redirect } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
 import * as ccase from 'change-case'
-import { DollarSign } from 'lucide-react'
+import { DollarSign, Printer } from 'lucide-react'
 import React from 'react'
 import _ from 'underscore'
 import { DynamicTable } from '#app/components/dynamic-table.js'
@@ -132,9 +132,16 @@ export default function Estimate() {
 						<TabsTrigger value="detail">Sections</TabsTrigger>
 						<TabsTrigger value="materials">Materials</TabsTrigger>
 					</TabsList>
-					<Button asChild className="ml-auto">
-						<Link to="edit">Edit</Link>
-					</Button>
+						<Button asChild className='ml-auto'>
+							<Link to="edit">Edit</Link>
+						</Button>
+
+						<Button asChild className='ml-2'>
+							<Link to="printout">
+								<Printer className="mr-2 h-4 w-4" />
+								Print Estimate
+							</Link>
+						</Button>
 				</div>
 				<TabsContent value="detail">
 					{_.pairs(_.groupBy(data.estimate.results, 'section')).map(

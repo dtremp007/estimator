@@ -100,7 +100,7 @@ export function DashboardNav({ className }: DashboardProps) {
 		return (
 			<aside
 				className={cn(
-					'sticky top-14 hidden h-screen w-[250px] border-r border-border pt-6 sm:block',
+					'sticky top-14 hidden h-[calc(100vh-56px)] w-[250px] border-r border-border pt-6 sm:block',
 					className,
 				)}
 			>

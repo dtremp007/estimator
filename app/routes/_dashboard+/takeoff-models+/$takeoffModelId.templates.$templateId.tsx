@@ -6,6 +6,7 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
+import { type Prisma } from '@prisma/client'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -47,6 +48,7 @@ const templateSchema = z.object({
 	companyInfo: z.string(),
 	bodyTemplate: z.string(),
 	greeting: z.string(),
+	logoImageId: z.string().optional(),
 	logoImage: z
 		.instanceof(File)
 		.optional()
@@ -55,6 +57,18 @@ const templateSchema = z.object({
 			'Image size must be less than 3MB',
 		),
 })
+
+async function uploadLogoImage(image: Prisma.LogoImageCreateInput | undefined) {
+	if (!image) {
+		return undefined
+	}
+
+	const logoImage = await prisma.logoImage.create({
+		data: image,
+	})
+
+	return logoImage.id
+}
 
 type TemplateSchema = z.infer<typeof templateSchema>
 
@@ -67,23 +81,49 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		include: {
 			variables: true,
 			inputs: true,
+			estimates: {
+				orderBy: {
+					createdAt: 'desc',
+				},
+				take: 1,
+			},
 		},
 	})
 
 	invariantResponse(takeoffModel, 'Takeoff model not found', { status: 404 })
 
 	if (templateId === 'new') {
-		return json({
-			template: {
+		let templateData
+		// If in development, return a fake template
+		if (process.env.NODE_ENV === 'development') {
+			templateData = {
+				name: 'Sample Template',
+				companyName: 'Sample Company',
+				companyInfo: 'Sample company information',
+				bodyTemplate: 'Sample body template',
+				greeting: 'Thank you for your business!',
+				logoImageId: null,
+				takeoffModelId: takeoffModel.id,
+			}
+		} else {
+			templateData = {
 				name: '',
 				companyName: '',
 				companyInfo: '',
 				bodyTemplate: '',
 				greeting: 'Thank you for your business!',
 				logoImageId: null,
-			},
-			takeoffModel,
+				takeoffModelId: takeoffModel.id,
+			}
+		}
+
+		const template = await prisma.printTemplate.create({
+			data: templateData,
 		})
+
+		return redirect(
+			`/takeoff-models/${takeoffModelId}/templates/${template.id}`,
+		)
 	}
 
 	const template = await prisma.printTemplate.findFirst({
@@ -114,13 +154,18 @@ export async function action({ params, request }: ActionFunctionArgs) {
 		unstable_createMemoryUploadHandler({ maxPartSize: MAX_SIZE }),
 	)
 
+	const intent = formData.get('intent')
+	const estimateId = formData.get('estimateId')
+
 	const submission = await parseWithZod(formData, {
 		schema: templateSchema.transform(async data => {
-			let image = null
+			let image = undefined
 			if (data.logoImage && data.logoImage.size > 0) {
 				image = {
-					contentType: data.logoImage.type,
 					blob: Buffer.from(await data.logoImage.arrayBuffer()),
+					altText: `${data.companyName} logo`,
+					contentType: data.logoImage.type,
+					userId,
 				}
 			}
 			return {
@@ -135,24 +180,23 @@ export async function action({ params, request }: ActionFunctionArgs) {
 		return json({ result: submission.reply() }, { status: 400 })
 	}
 
-	const { name, companyName, companyInfo, bodyTemplate, greeting, image } =
-		submission.value
+	const {
+		name,
+		companyName,
+		companyInfo,
+		bodyTemplate,
+		greeting,
+		image: _image,
+		logoImageId: _logoImageId,
+	} = submission.value
 
-	if (templateId === 'new') {
-		await prisma.printTemplate.create({
-			// @ts-expect-error - image is optional
-			data: {
-				name,
-				companyName,
-				companyInfo,
-				bodyTemplate,
-				greeting,
-				takeoffModelId,
-				logoImage: image ? { create: image } : undefined,
-			},
-		})
-	} else {
-		await prisma.printTemplate.update({
+	let shouldUpdateLogoImage = true
+
+	if (_logoImageId) {
+		shouldUpdateLogoImage = false
+
+		// Fetch the existing printTemplate to get the current logoImageId
+		const existingTemplate = await prisma.printTemplate.findUnique({
 			where: {
 				id: templateId,
 				takeoffModel: {
@@ -160,17 +204,46 @@ export async function action({ params, request }: ActionFunctionArgs) {
 					ownerId: userId,
 				},
 			},
-			data: {
-				name,
-				companyName,
-				companyInfo,
-				bodyTemplate,
-				greeting,
-				logoImage: image
-					? { upsert: { create: image, update: image } }
-					: undefined,
+			select: {
+				logoImageId: true,
 			},
 		})
+
+		// Delete old image if it exists and is different
+		if (existingTemplate?.logoImageId && existingTemplate.logoImageId !== _logoImageId) {
+			await prisma.logoImage.delete({
+				where: {
+					id: existingTemplate.logoImageId,
+				},
+			})
+			shouldUpdateLogoImage = true
+		}
+	}
+
+	const logoImageId = shouldUpdateLogoImage
+		? (await uploadLogoImage(_image))
+		: _logoImageId
+
+	await prisma.printTemplate.update({
+		where: {
+			id: templateId,
+			takeoffModel: {
+				id: takeoffModelId,
+				ownerId: userId,
+			},
+		},
+		data: {
+			name,
+			companyName,
+			companyInfo,
+			bodyTemplate,
+			greeting,
+			logoImageId,
+		},
+	})
+
+	if (intent === 'preview') {
+		return redirect(`/estimates/${estimateId}/printout`)
 	}
 
 	return redirect(`/takeoff-models/${takeoffModelId}`)
@@ -194,6 +267,8 @@ export default function TemplateForm() {
 		defaultValue: data.template ?? undefined,
 		shouldRevalidate: 'onBlur',
 	})
+
+	const previewEstimate = data.takeoffModel.estimates[0]
 
 	const insertVariable = (variable: string) => {
 		if (bodyTemplateRef.current) {
@@ -314,6 +389,7 @@ export default function TemplateForm() {
 							className="mt-2 h-32 w-32 object-contain"
 						/>
 					) : null}
+					<input {...getInputProps(fields.logoImageId, { type: 'hidden' })} />
 					<input
 						{...getInputProps(fields.logoImage, { type: 'file' })}
 						accept="image/*"
@@ -335,6 +411,17 @@ export default function TemplateForm() {
 				</div>
 				<ErrorList errors={form.errors} id={form.errorId} />
 				<div className="flex justify-end gap-4">
+					<input type="hidden" name="estimateId" value={previewEstimate.id} />
+					{previewEstimate ? (
+						<StatusButton
+							type="submit"
+							name="intent"
+							value="preview"
+							status={isPending ? 'pending' : form.status ?? 'idle'}
+						>
+							Save & Preview
+						</StatusButton>
+					) : null}
 					<StatusButton
 						type="submit"
 						status={isPending ? 'pending' : form.status ?? 'idle'}

@@ -271,7 +271,7 @@ model TakeoffModel {
 
     inputs         CustomInputElement[]
     variables      CustomVariable[]
-    estimate       Estimate[]
+    estimates       Estimate[]
     printTemplates PrintTemplate[]
 }
 
@@ -426,7 +426,7 @@ model LogoImage {
 
     createdAt     DateTime        @default(now())
     updatedAt     DateTime        @updatedAt
-    PrintTemplate PrintTemplate[]
+    printTemplate PrintTemplate[]
 
     User          User?           @relation(fields: [userId], references: [id])
     userId        String?

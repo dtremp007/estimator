@@ -132,16 +132,16 @@ export default function Estimate() {
 						<TabsTrigger value="detail">Sections</TabsTrigger>
 						<TabsTrigger value="materials">Materials</TabsTrigger>
 					</TabsList>
-						<Button asChild className='ml-auto'>
-							<Link to="edit">Edit</Link>
-						</Button>
+					<Button asChild className="ml-auto">
+						<Link to="edit">Edit</Link>
+					</Button>
 
-						<Button asChild className='ml-2'>
-							<Link to="printout">
-								<Printer className="mr-2 h-4 w-4" />
-								Print Estimate
-							</Link>
-						</Button>
+					<Button asChild className="ml-2">
+						<Link to="printout">
+							<Printer className="mr-2 h-4 w-4" />
+							Printout
+						</Link>
+					</Button>
 				</div>
 				<TabsContent value="detail">
 					{_.pairs(_.groupBy(data.estimate.results, 'section')).map(

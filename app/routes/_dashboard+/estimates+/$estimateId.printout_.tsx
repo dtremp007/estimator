@@ -88,7 +88,7 @@ export default function EstimatePrintout() {
 
 	return (
 		<div className="main-container mx-auto max-w-4xl print:p-8">
-			<div className="mb-8 flex justify-end">
+			<div className="mb-8 flex justify-end print:hidden">
 				<Button onClick={handlePrint}>
 					<Printer className="mr-2 h-4 w-4" />
 					Print
@@ -171,9 +171,9 @@ export default function EstimatePrintout() {
 					/> */}
 				</div>
 				<div className="">
-					<div className="flex flex-wrap justify-between text-2xl font-bold">
+					<div className="flex flex-wrap items-center justify-between text-2xl font-bold">
 						<span className="font-bold">TOTAL $</span>
-						<Input className="text-right max-md:w-full" defaultValue={total} />
+						<Input className="text-right max-sm:w-full" defaultValue={total} />
 					</div>
 				</div>
 			</div>

@@ -210,7 +210,10 @@ export async function action({ params, request }: ActionFunctionArgs) {
 		})
 
 		// Delete old image if it exists and is different
-		if (existingTemplate?.logoImageId && existingTemplate.logoImageId !== _logoImageId) {
+		if (
+			existingTemplate?.logoImageId &&
+			existingTemplate.logoImageId !== _logoImageId
+		) {
 			await prisma.logoImage.delete({
 				where: {
 					id: existingTemplate.logoImageId,
@@ -221,7 +224,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 	}
 
 	const logoImageId = shouldUpdateLogoImage
-		? (await uploadLogoImage(_image))
+		? await uploadLogoImage(_image)
 		: _logoImageId
 
 	await prisma.printTemplate.update({
@@ -399,6 +402,10 @@ export default function TemplateForm() {
 								const reader = new FileReader()
 								reader.onload = event => {
 									setLogoPreview(event.target?.result?.toString() ?? null)
+									form.update({
+										name: fields.logoImageId.name,
+										value: '',
+									})
 								}
 								reader.readAsDataURL(file)
 							}

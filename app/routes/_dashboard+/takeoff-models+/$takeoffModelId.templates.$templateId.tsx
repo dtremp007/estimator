@@ -83,7 +83,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 			inputs: true,
 			estimates: {
 				orderBy: {
-					createdAt: 'desc',
+					updatedAt: 'desc',
 				},
 				take: 1,
 			},

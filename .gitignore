@@ -10,9 +10,6 @@ node_modules
 /prisma/data.db-journal
 /tests/prisma
 
-/test-results/
-/playwright-report/
-/playwright/.cache/
 /tests/fixtures/email/
 /coverage
 
@@ -20,3 +17,6 @@ node_modules
 
 # Easy way to create temporary files/folders that won't accidentally be added to git
 *.local.*
+
+# Orb portal manifests are specific to each running orb.
+.amp/portals/*

@@ -68,9 +68,14 @@ There are no automated lint, test, or separate build checks; run
 image remotely on Fly.io. An in-progress deployment is not cancelled by a newer
 push.
 
+Despite its name, the existing Fly app `estimator-staging` is the production
+destination for `main`, at https://estimator-staging.fly.dev. The workflow reads
+the app name from `fly.toml`; it does not deploy to the separate `estimator`
+app.
+
 1. Confirm that `fly.toml` names your existing production Fly app (currently
-   `estimator`). The app must already have its persistent `data` volume in the
-   primary region (`lax`), LiteFS/Consul lease configuration, and runtime
+   `estimator-staging`). The app must already have its persistent `data` volume
+   in the primary region (`lax`), LiteFS/Consul lease configuration, and runtime
    secrets. `other/litefs.yml` requires `FLY_CONSUL_URL` and `PRIMARY_REGION` in
    addition to the platform-provided Fly variables. Configure application
    secrets such as `SESSION_SECRET`, `HONEYPOT_SECRET`,
@@ -81,7 +86,7 @@ push.
 2. Sign in to Fly with `fly auth login`, then create an app-scoped deploy token:
 
    ```sh
-   fly tokens create deploy --app estimator --expiry 720h
+   fly tokens create deploy --app estimator-staging --expiry 720h
    ```
 
    Use your app name if different. This token expires after 30 days; rotate it
@@ -91,7 +96,9 @@ push.
 3. In the GitHub repository, open **Settings → Secrets and variables → Actions →
    New repository secret**. Add `FLY_API_TOKEN` with that token. The existing
    Sentry source-map integration also accepts an optional `SENTRY_AUTH_TOKEN`
-   repository secret; leave it unset if Sentry uploads are not configured.
+   repository secret; leave it unset if Sentry uploads are not configured. If
+   `FLY_API_TOKEN` is scoped only to `estimator`, replace it with a token for
+   `estimator-staging` before deploying.
 4. Under **Settings → Actions → General**, ensure the repository policy permits
    `actions/checkout` and `superfly/flyctl-actions/setup-flyctl`. Read-only
    `GITHUB_TOKEN` permissions are sufficient. Under **Settings → Rules →

@@ -1,10 +1,7 @@
 import { createContext } from "./context";
 
 const {
-    getUserInput,
-    getPrice,
     createSection,
-    getVariable,
 } = createContext({} as any)
 
 createSection('Roofing')

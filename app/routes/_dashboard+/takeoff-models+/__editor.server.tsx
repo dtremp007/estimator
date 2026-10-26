@@ -1,6 +1,5 @@
-import vm from 'node:vm'
-import { parseWithZod } from '@conform-to/zod'
-import { type ActionFunctionArgs, json, redirect } from '@remix-run/node'
+import { parseWithZod } from '@conform-to/zod/v4'
+import { type ActionFunctionArgs, json } from '@remix-run/node'
 import { z } from 'zod'
 import {
 	BuildingDimensions,
@@ -8,9 +7,9 @@ import {
 	CustomVariableLookupTable,
 	PriceLookupTable,
 	TakeOffApi,
-	createContext,
 	createDummyBuildingDimensions,
 } from '#app/lib/takeoff'
+import { executeTakeoffCode } from '#app/lib/takeoff/execute.server.ts'
 import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
 import {
@@ -72,20 +71,21 @@ export async function action({ request }: ActionFunctionArgs) {
 		variables: variablesLookupTable,
 	})
 
-	const vmContext = vm.createContext(createContext(takeoffApi))
-	let errorMessages = []
-
 	try {
-		vm.runInContext(code, vmContext)
-	} catch (error: Error | any) {
-		errorMessages.push(error.message)
+		await executeTakeoffCode(code, takeoffApi)
+	} catch (error) {
+		return json({
+			result: submission.reply({
+				formErrors: [error instanceof Error ? error.message : 'Calculation failed'],
+			}),
+		}, { status: 400 })
 	}
 
 	const inputs = takeoffApi.inputs.getLookupHistory()
 	const variables = takeoffApi.variables.getLookupHistory()
 
 	await prisma.takeoffModel.update({
-		where: { id: takeoffModel.id },
+		where: { id: takeoffModel.id, ownerId: userId },
 		data: {
 			code,
 			//
@@ -135,9 +135,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	return json(
 		{
-			result: submission.reply({
-				formErrors: errorMessages,
-			}),
+			result: submission.reply(),
 		},
 		{
 			headers: await createToastHeaders({

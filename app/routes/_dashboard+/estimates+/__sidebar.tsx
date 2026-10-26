@@ -1,13 +1,6 @@
 import { useMediaQuery } from '@mantine/hooks'
 import React from 'react'
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '#app/components/ui/dialog'
+import { Button } from '#app/components/ui/button.js'
 import {
 	Drawer,
 	DrawerClose,
@@ -16,9 +9,7 @@ import {
 	DrawerFooter,
 	DrawerHeader,
 	DrawerTitle,
-	DrawerTrigger,
 } from '#app/components/ui/drawer'
-import { Button } from '#app/components/ui/button.js'
 import { cn } from '#app/utils/misc.js'
 
 type SidebarProps = {

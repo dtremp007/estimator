@@ -1,25 +1,9 @@
-import { requireUserId } from '#app/utils/auth.server.js'
-import { prisma } from '#app/utils/db.server.js'
-import _, { where } from 'underscore'
-import { LoaderFunctionArgs, json, redirect } from '@remix-run/node'
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableFooter,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from '#app/components/ui/table'
-import React from 'react'
-import {
-	Tabs,
-	TabsList,
-	TabsTrigger,
-	TabsContent,
-} from '#app/components/ui/tabs'
-import { CalculatedItem } from '#app/lib/takeoff/takeoff-api.js'
+import { type LoaderFunctionArgs, json, redirect } from '@remix-run/node'
 import { Link, useLoaderData } from '@remix-run/react'
+import { DollarSign } from 'lucide-react'
+import React from 'react'
+import _ from 'underscore'
+import { Button } from '#app/components/ui/button'
 import {
 	Card,
 	CardContent,
@@ -27,8 +11,23 @@ import {
 	CardHeader,
 	CardTitle,
 } from '#app/components/ui/card'
-import { Button } from '#app/components/ui/button'
-import { DollarSign } from 'lucide-react'
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from '#app/components/ui/table'
+import {
+	Tabs,
+	TabsList,
+	TabsTrigger,
+	TabsContent,
+} from '#app/components/ui/tabs'
+import { type CalculatedItem } from '#app/lib/takeoff/takeoff-api.js'
+import { requireUserId } from '#app/utils/auth.server.js'
+import { prisma } from '#app/utils/db.server.js'
 import { nameTheThing } from '#app/utils/naming.server.js'
 
 export async function loader({ params, request }: LoaderFunctionArgs) {

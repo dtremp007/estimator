@@ -1,12 +1,12 @@
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	json,
-	unstable_parseMultipartFormData as parseMultipartFormData,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 	redirect,
 } from '@remix-run/node'
-import { formatListTimeAgo } from '#app/utils/misc.js'
+import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
+import BasicTable from '#app/components/basic-table.js'
 import { Button } from '#app/components/ui/button'
 import {
 	Dialog,
@@ -17,31 +17,15 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '#app/components/ui/dialog'
+import { Icon } from '#app/components/ui/icon.js'
 import { Input } from '#app/components/ui/input'
 import { Label } from '#app/components/ui/label'
-import BasicTable from '#app/components/basic-table.js'
-import { Table } from 'lucide-react'
 import { TableCell, TableRow } from '#app/components/ui/table'
-import {
-	Form,
-	Link,
-	Outlet,
-	useActionData,
-	useLoaderData,
-} from '@remix-run/react'
-import { Icon } from '#app/components/ui/icon.js'
-import { getFormProps, useForm } from '@conform-to/react'
-import { PricelistSchema } from '#app/lib/takeoff/pricelist.class.js'
 import { requireUserId } from '#app/utils/auth.server.js'
-import { parseCSVFromFile } from '#app/utils/csv-parser.js'
-import {
-	csvUploadHandler,
-	isUploadedFile,
-} from '#app/utils/csv-upload-handler.js'
+import { parsePricelistFormData } from '#app/utils/csv-upload-handler.js'
 import { prisma } from '#app/utils/db.server'
-import {
-	requireUserWithPermission,
-} from '#app/utils/permissions.server.js'
+import { formatListTimeAgo } from '#app/utils/misc.js'
+import { requireUserWithPermission } from '#app/utils/permissions.server.js'
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -55,9 +39,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return json({ pricelists: formatListTimeAgo(pricelists) })
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
-	const formData = await parseMultipartFormData(request, csvUploadHandler)
+	const { formData, result } = await parsePricelistFormData(request)
 	const intent = formData.get('intent')
 
 	if (intent === 'delete') {
@@ -65,7 +49,21 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	}
 
 	if (intent === 'upload') {
-		return handleCSVUpload(userId, formData)
+		if (!result.success) {
+			return json({ error: result.error }, { status: 400 })
+		}
+		const name = formData.get('name')
+		if (typeof name !== 'string' || !name.trim()) {
+			return json({ error: { message: 'A name is required' } }, { status: 400 })
+		}
+		const pricelist = await prisma.pricelist.create({
+			data: {
+				ownerId: userId,
+				name,
+				items: { create: result.data },
+			},
+		})
+		return redirect(`/pricelists/${pricelist.id}`)
 	}
 
 	return null
@@ -104,45 +102,6 @@ export default function Pricelists() {
 			</BasicTable>
 		</div>
 	)
-}
-
-async function handleCSVUpload(userId: string, formData: FormData) {
-	const file = formData.get('pricelist')
-	const name = formData.get('name') as string
-
-	if (!isUploadedFile(file)) return null
-
-	const pricelistFromCSV = await parseCSVFromFile(file.getFilePath())
-
-	const result = PricelistSchema.safeParse(pricelistFromCSV)
-
-	if (!result.success) {
-		return json({ error: result.error }, { status: 400 })
-	}
-
-	const pricelistData = result.data
-
-	const newPricelist = await prisma.pricelist.create({
-		data: {
-			ownerId: userId,
-			name: name,
-		},
-	})
-
-	pricelistData.forEach(async item => {
-		await prisma.pricelistItem.create({
-			data: {
-				pricelistId: newPricelist.id,
-				category: item.category,
-				name: item.name,
-				pricePerUnit: item.pricePerUnit,
-				unitType: item.unitType,
-				currency: item.currency,
-			},
-		})
-	})
-
-	return redirect(`/pricelists/${newPricelist.id}`)
 }
 
 function CSVUploadDialog() {
@@ -206,28 +165,35 @@ function CSVUploadDialog() {
 	)
 }
 
-async function handlePricelistDelete(request: Request, userId: string, formData: FormData) {
-    const id = formData.get('id') as string
+async function handlePricelistDelete(
+	request: Request,
+	userId: string,
+	formData: FormData,
+) {
+	const id = formData.get('id')
+	invariantResponse(typeof id === 'string' && id.length > 0, 'ID is required', {
+		status: 400,
+	})
 
-    const pricelist = await prisma.pricelist.findFirst({
-        where: {
-            id: id,
-        },
-    })
+	const pricelist = await prisma.pricelist.findFirst({
+		where: {
+			id: id,
+		},
+	})
 
-    invariantResponse(pricelist, 'Not found', { status: 404 })
+	invariantResponse(pricelist, 'Not found', { status: 404 })
 
-    const isOwner = pricelist.ownerId === userId
-    await requireUserWithPermission(
-        request,
-        isOwner ? `delete:pricelist:own` : `delete:pricelist:any`,
-    )
+	const isOwner = pricelist.ownerId === userId
+	await requireUserWithPermission(
+		request,
+		isOwner ? `delete:pricelist:own` : `delete:pricelist:any`,
+	)
 
-    await prisma.pricelist.delete({
-        where: {
-            id: id,
-        },
-    })
+	await prisma.pricelist.delete({
+		where: {
+			id: id,
+		},
+	})
 
-    return null
+	return null
 }

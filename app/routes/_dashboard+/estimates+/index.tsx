@@ -2,7 +2,7 @@ import { invariantResponse } from '@epic-web/invariant'
 import {
 	type LoaderFunctionArgs,
 	json,
-	ActionFunctionArgs,
+	type ActionFunctionArgs,
 } from '@remix-run/node'
 import { ListEntitiesPage } from '#app/components/list-entities-page.js'
 import { requireUserId } from '#app/utils/auth.server.js'

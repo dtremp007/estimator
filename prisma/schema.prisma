@@ -262,7 +262,7 @@ model TakeoffModel {
     id          String  @id @default(cuid())
     name        String
     description String?
-    code        String
+    code        String  @default("")
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -285,7 +285,7 @@ model CustomInputElement {
     defaultValue String
     label        String
     props        String
-    order        Int
+    order        Int     @default(0)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

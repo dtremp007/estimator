@@ -1,9 +1,5 @@
 {
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "app/routes/_dashboard+/estimates+/.index.tsx"
-, "app/routes/_dashboard+/estimates+/.$estimationId_.calculate.tsx"  ],
+  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "isolatedModules": true,

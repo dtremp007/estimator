@@ -1,6 +1,6 @@
-import { BuildingDimensions } from '#app/lib/takeoff/building-dimensions.class.js'
 import { useMemo } from 'react'
 import { z } from 'zod'
+import { BuildingDimensions } from '#app/lib/takeoff/building-dimensions.class.js'
 
 export const BuildingDimensionsSchema = z.object({
 	width: z.number().min(1).max(100),

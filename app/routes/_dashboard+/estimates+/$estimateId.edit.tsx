@@ -1,20 +1,16 @@
-import vm from 'node:vm'
 import { invariantResponse } from '@epic-web/invariant'
 import {
 	type ActionFunctionArgs,
-	type SerializeFrom,
 	json,
 	type LoaderFunctionArgs,
 } from '@remix-run/node'
 import {
 	Form,
 	Link,
-	Outlet,
 	redirect,
 	useActionData,
 	useFetcher,
 	useLoaderData,
-	useMatches,
 } from '@remix-run/react'
 import { LoaderCircle, Sidebar as SidebarIcon } from 'lucide-react'
 import React from 'react'
@@ -31,21 +27,19 @@ import {
 	SelectContent,
 	SelectGroup,
 	SelectItem,
-	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from '#app/components/ui/select'
 import {
 	BuildingDimensions,
-	type CalculatedItem,
 	CustomInputLookupTable,
 	CustomVariableLookupTable,
 	PriceLookupTable,
 	TakeOffApi,
-	createContext,
 	createDummyBuildingDimensions,
 } from '#app/lib/takeoff'
 import { type TakeoffCustomInput } from '#app/lib/takeoff/custom-user-input.js'
+import { executeTakeoffCode } from '#app/lib/takeoff/execute.server.ts'
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import SidebarCompoment from './__sidebar'
@@ -58,6 +52,7 @@ export const handle = {
 
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
+	invariantResponse(params.estimateId, 'Not found', { status: 404 })
 
 	const estimate = await prisma.estimate.findFirst({
 		select: {
@@ -72,6 +67,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		},
 		where: {
 			id: params.estimateId,
+			ownerId: userId,
+			OR: [{ model: null }, { model: { ownerId: userId } }],
 		},
 	})
 
@@ -109,26 +106,34 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const formData = await request.formData()
+	const userId = await requireUserId(request)
 	const estimateId = params.estimateId
 	invariantResponse(estimateId, 'Not found', { status: 404 })
+	const estimate = await prisma.estimate.findUnique({
+		where: { id: estimateId, ownerId: userId },
+		select: { id: true, takeoffModelId: true },
+	})
+	invariantResponse(estimate, 'Not found', { status: 404 })
+	const formData = await request.formData()
 
 	const intent = formData.get('intent') as string
 
 	switch (intent) {
 		case 'submit-takeoff-values':
-			return submitTakeoffValues(estimateId, formData)
+			return submitTakeoffValues(estimateId, estimate.takeoffModelId, userId, formData)
 		case 'update-name':
-			return updateTakeoffModelName(estimateId, formData)
+			return updateTakeoffModelName(estimateId, userId, formData)
 		case 'update-takeoff-model':
-			return updateTakeoffModel(estimateId, formData)
+			return updateTakeoffModel(estimateId, userId, formData)
 		default:
 			return null
 	}
 }
 
-async function submitTakeoffValues(estimateId: string, formData: FormData) {
+async function submitTakeoffValues(estimateId: string, takeoffModelId: string | null, userId: string, formData: FormData) {
+	invariantResponse(takeoffModelId, 'Select a takeoff model', { status: 400 })
 	const takeoffModel = await prisma.takeoffModel.findFirst({
+		where: { id: takeoffModelId, ownerId: userId },
 		include: {
 			inputs: true,
 			variables: true,
@@ -155,13 +160,11 @@ async function submitTakeoffValues(estimateId: string, formData: FormData) {
 		variables: variablesLookupTable,
 	})
 
-	const vmContext = vm.createContext(createContext(takeoffApi))
-
 	try {
-		vm.runInContext(takeoffModel.code, vmContext)
-	} catch (error: Error | any) {
+		await executeTakeoffCode(takeoffModel.code, takeoffApi)
+	} catch (error) {
 		return json({
-			result: error.message,
+			result: error instanceof Error ? error.message : 'Calculation failed',
 			sections: [],
 		})
 	}
@@ -192,7 +195,7 @@ async function submitTakeoffValues(estimateId: string, formData: FormData) {
 	})
 
 	await prisma.estimate.update({
-		where: { id: estimateId },
+		where: { id: estimateId, ownerId: userId },
 		data: {
 			results: {
 				upsert: results.map(result => {
@@ -291,10 +294,10 @@ export default function TakeoffInputSheet() {
 	)
 }
 
-async function updateTakeoffModelName(estimateId: string, formData: FormData) {
+async function updateTakeoffModelName(estimateId: string, userId: string, formData: FormData) {
 	const name = formData.get('name') as string
 	await prisma.estimate.update({
-		where: { id: estimateId },
+		where: { id: estimateId, ownerId: userId },
 		data: { name },
 	})
 
@@ -383,10 +386,16 @@ function RenderInput({ input }: RenderInputProps) {
 	)
 }
 
-async function updateTakeoffModel(estimateId: string, formData: FormData) {
+async function updateTakeoffModel(estimateId: string, userId: string, formData: FormData) {
 	const takeoffModelId = formData.get('takeoffModelId') as string
+	invariantResponse(takeoffModelId, 'Select a takeoff model', { status: 400 })
+	const model = await prisma.takeoffModel.findUnique({
+		where: { id: takeoffModelId, ownerId: userId },
+		select: { id: true },
+	})
+	invariantResponse(model, 'Not found', { status: 404 })
 	await prisma.estimate.update({
-		where: { id: estimateId },
+		where: { id: estimateId, ownerId: userId },
 		data: {
 			takeoffModelId,
 		},

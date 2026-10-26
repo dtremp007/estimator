@@ -2,7 +2,6 @@ import { type FieldMetadata, useInputControl } from '@conform-to/react'
 import {
 	Select,
 	SelectContent,
-	SelectGroup,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,

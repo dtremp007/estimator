@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import {
 	json,
 	redirect,
@@ -39,8 +39,10 @@ const SignupFormSchema = z
 		username: UsernameSchema,
 		name: NameSchema,
 		agreeToTermsOfServiceAndPrivacyPolicy: z.boolean({
-			required_error:
-				'You must agree to the terms of service and privacy policy',
+			error: issue =>
+				issue.input === undefined
+					? 'You must agree to the terms of service and privacy policy'
+					: undefined,
 		}),
 		remember: z.boolean().optional(),
 		redirectTo: z.string().optional(),

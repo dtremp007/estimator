@@ -1,5 +1,6 @@
 import { invariant, invariantResponse } from '@epic-web/invariant'
 import { useDragAndDrop } from '@formkit/drag-and-drop/react'
+import { useMediaQuery } from '@mantine/hooks'
 import {
 	type LoaderFunctionArgs,
 	json,
@@ -8,7 +9,9 @@ import {
 import { Link, redirect, useFetcher, useLoaderData } from '@remix-run/react'
 import hljs from 'highlight.js/lib/core'
 import javascript from 'highlight.js/lib/languages/javascript'
+import { Check, LoaderCircle } from 'lucide-react'
 import React from 'react'
+import { useSpinDelay } from 'spin-delay'
 import BasicTable from '#app/components/basic-table.js'
 import { Button } from '#app/components/ui/button.js'
 import {
@@ -19,17 +22,12 @@ import {
 	CardHeader,
 	CardTitle,
 } from '#app/components/ui/card'
-import { TableCell, TableRow } from '#app/components/ui/table'
-import { prisma } from '#app/utils/db.server.js'
-import 'highlight.js/styles/a11y-dark.css'
-import { createGenericName } from '#app/utils/misc.js'
-import { useSpinDelay } from 'spin-delay'
-import { Icon } from '#app/components/ui/icon.js'
-import { Check, LoaderCircle } from 'lucide-react'
-import { requireUserId } from '#app/utils/auth.server.js'
 import { Input } from '#app/components/ui/input.js'
-import { useMediaQuery } from '@mantine/hooks'
+import { TableCell, TableRow } from '#app/components/ui/table'
+import { requireUserId } from '#app/utils/auth.server.js'
+import { prisma } from '#app/utils/db.server.js'
 import { nameTheThing } from '#app/utils/naming.server.js'
+import 'highlight.js/styles/a11y-dark.css'
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
 	const userId = await requireUserId(request)
@@ -37,6 +35,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	let takeoffModel = await prisma.takeoffModel.findFirst({
 		where: {
 			id: params.takeoffModelId,
+			ownerId: userId,
 		},
 		include: {
 			variables: true,
@@ -49,6 +48,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	})
 
 	if (!takeoffModel) {
+		invariantResponse(params.takeoffModelId === 'new', 'Not found', { status: 404 })
 		const name = await nameTheThing(userId, 'New Takeoff Model', 'takeoffModel')
 
 		takeoffModel = await prisma.takeoffModel.create({
@@ -89,17 +89,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
+	const userId = await requireUserId(request)
 	const formData = await request.formData()
 	const intent = formData.get('intent')
 	const takeoffModelId = params.takeoffModelId
 
 	invariantResponse(takeoffModelId, 'Not found', { status: 404 })
+	const model = await prisma.takeoffModel.findUnique({
+		where: { id: takeoffModelId, ownerId: userId },
+		select: { id: true },
+	})
+	invariantResponse(model, 'Not found', { status: 404 })
 
 	switch (intent) {
 		case 'update-name':
-			return updateTakeoffModelName(takeoffModelId, formData)
+			return updateTakeoffModelName(takeoffModelId, userId, formData)
 		case 'update-inputs-order':
-			return updateInputsOrder(takeoffModelId, formData)
+			return updateInputsOrder(takeoffModelId, userId, formData)
 	}
 
 	return null
@@ -160,11 +166,12 @@ export default function TakeoffModelIndex() {
 
 async function updateTakeoffModelName(
 	takeoffModelId: string,
+	userId: string,
 	formData: FormData,
 ) {
 	const name = formData.get('name') as string
 	await prisma.takeoffModel.update({
-		where: { id: takeoffModelId },
+		where: { id: takeoffModelId, ownerId: userId },
 		data: { name },
 	})
 
@@ -208,10 +215,10 @@ function TakeoffModelNameForm() {
 	)
 }
 
-async function updateInputsOrder(takeoffModelId: string, formData: FormData) {
+async function updateInputsOrder(takeoffModelId: string, userId: string, formData: FormData) {
 	const inputs = formData.getAll('inputs[]') as string[]
 	await prisma.takeoffModel.update({
-		where: { id: takeoffModelId },
+		where: { id: takeoffModelId, ownerId: userId },
 		data: {
 			inputs: {
 				updateMany: inputs.map((name, index) => ({

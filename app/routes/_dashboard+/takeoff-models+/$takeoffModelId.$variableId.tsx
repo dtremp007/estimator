@@ -1,5 +1,6 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
-import { parseWithZod } from '@conform-to/zod'
+import { parseWithZod } from '@conform-to/zod/v4'
+import { invariantResponse } from '@epic-web/invariant'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -18,6 +19,7 @@ import {
 	CardTitle,
 } from '#app/components/ui/card'
 import { SelectField } from '#app/components/ui/select-field.js'
+import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
 
 export const handle = {
@@ -42,24 +44,49 @@ function valueMatchesType(value: string, type: string) {
 	}
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params, request }: LoaderFunctionArgs) {
+	const userId = await requireUserId(request)
+	invariantResponse(params.takeoffModelId && params.variableId, 'Not found', { status: 404 })
+	const model = await prisma.takeoffModel.findUnique({
+		where: { id: params.takeoffModelId, ownerId: userId },
+		select: { id: true },
+	})
+	invariantResponse(model, 'Not found', { status: 404 })
+	if (params.variableId === 'new') return json({ variable: null })
 	const variable = await prisma.customVariable.findFirst({
 		where: {
 			id: params.variableId,
+			takeoffModelId: model.id,
 		},
 	})
+	invariantResponse(variable, 'Not found', { status: 404 })
 
 	return json({ variable })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const formData = await request.formData()
+	const userId = await requireUserId(request)
 	const takeoffModelId = params.takeoffModelId
+	const variableId = params.variableId
+	invariantResponse(takeoffModelId && variableId, 'Not found', { status: 404 })
+	const model = await prisma.takeoffModel.findUnique({
+		where: { id: takeoffModelId, ownerId: userId },
+		select: { id: true },
+	})
+	invariantResponse(model, 'Not found', { status: 404 })
+	if (variableId !== 'new') {
+		const variable = await prisma.customVariable.findFirst({
+			where: { id: variableId, takeoffModelId },
+			select: { id: true },
+		})
+		invariantResponse(variable, 'Not found', { status: 404 })
+	}
+	const formData = await request.formData()
 
 	if (formData.get('intent') === 'delete') {
-		const id = formData.get('id')
+		invariantResponse(variableId !== 'new', 'Not found', { status: 404 })
 		await prisma.customVariable.delete({
-			where: { id: id as string },
+			where: { id: variableId, takeoffModelId, takeoffModel: { ownerId: userId } },
 		})
 	}
 
@@ -81,7 +108,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			)
 		}
 
-		const { id, name, type, value } = submission.value
+		const { name, type, value } = submission.value
 
 		if (!valueMatchesType(value, type)) {
 			return json(
@@ -95,11 +122,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		}
 
 		await prisma.takeoffModel.update({
-			where: { id: takeoffModelId },
+			where: { id: takeoffModelId, ownerId: userId },
 			data: {
 				variables: {
 					upsert: {
-						where: { id: id ?? '__new__' },
+						where: { id: variableId === 'new' ? '__new__' : variableId },
 						update: { name, type, value },
 						create: {
 							name,

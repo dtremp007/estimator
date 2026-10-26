@@ -4,12 +4,8 @@ import {
 	Box,
 	Calculator,
 	Home,
-	LineChart,
 	ListChecks,
 	MenuIcon,
-	Package,
-	ShoppingCart,
-	Users,
 } from 'lucide-react'
 import React from 'react'
 import {

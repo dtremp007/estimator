@@ -1,0 +1,313 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id       String  @id @default(cuid())
+    email    String  @unique
+    username String  @unique
+    name     String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    image       UserImage?
+    password    Password?
+    roles       Role[]
+    sessions    Session[]
+    connections Connection[]
+    estimations Estimate[]
+    teams       Team[]
+    pricelist   Pricelist[]
+    models      TakeoffModel[]
+}
+
+model UserImage {
+    id          String  @id @default(cuid())
+    altText     String?
+    contentType String
+    blob        Bytes
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId String @unique
+}
+
+model Password {
+    hash String
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId String @unique
+}
+
+model Session {
+    id             String   @id @default(cuid())
+    expirationDate DateTime
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId String
+
+    // non-unique foreign key
+    @@index([userId])
+}
+
+model Permission {
+    id          String @id @default(cuid())
+    action      String // e.g. create, read, update, delete
+    entity      String // e.g. note, user, etc.
+    access      String // e.g. own or any
+    description String @default("")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    roles Role[]
+
+    @@unique([action, entity, access])
+}
+
+model Role {
+    id          String @id @default(cuid())
+    name        String @unique
+    description String @default("")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    users       User[]
+    permissions Permission[]
+}
+
+model Verification {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+
+    /// The type of verification, e.g. "email" or "phone"
+    type String
+
+    /// The thing we're trying to verify, e.g. a user's email or phone number
+    target String
+
+    /// The secret key used to generate the otp
+    secret String
+
+    /// The algorithm used to generate the otp
+    algorithm String
+
+    /// The number of digits in the otp
+    digits Int
+
+    /// The number of seconds the otp is valid for
+    period Int
+
+    /// The valid characters for the otp
+    charSet String
+
+    /// When it's safe to delete this verification
+    expiresAt DateTime?
+
+    @@unique([target, type])
+}
+
+model Connection {
+    id           String @id @default(cuid())
+    providerName String
+    providerId   String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId String
+
+    @@unique([providerName, providerId])
+}
+
+model Estimate {
+    id          String              @id @default(cuid())
+    name        String
+    description String?
+    dimensions  BuildingDimensions?
+    /// JSON data for the estimation
+    attributes  String?
+    /// The status of the estimation, e.g. "draft", "submitted", "approved", "rejected"
+    status      String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    owner          User               @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    ownerId        String
+    teams          Team[]
+    results        EstimateResults[]
+    formData       EstimateFormData[]
+    model          TakeoffModel?      @relation(fields: [takeoffModelId], references: [id])
+    takeoffModelId String?
+
+    // non-unique foreign key
+    @@index([ownerId])
+    // This helps our order by in the user search a LOT
+    @@index([ownerId, updatedAt])
+}
+
+model BuildingDimensions {
+    id String @id @default(cuid())
+
+    width                    Float
+    length                   Float
+    wallHeight               Float
+    totalInteriorWallsLength Float
+    roofRisePerFoot          Float
+    soffitOverhangWidth      Float
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    estimation   Estimate @relation(fields: [estimationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    estimationId String   @unique
+}
+
+model EstimateResults {
+    id             String  @id @default(cuid())
+    name           String
+    priceLookupKey String
+    qty            Float
+    pricePerUnit   Float
+    total          Float
+    currency       String
+    section        String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    estimateId String
+
+    @@unique([estimateId, name])
+}
+
+model EstimateFormData {
+    id    String @id @default(cuid())
+    name  String
+    value String
+    type  String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    estimate   Estimate @relation(fields: [estimateId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    estimateId String
+
+    @@unique([estimateId, name])
+}
+
+model Team {
+    id          String  @id @default(cuid())
+    name        String
+    description String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    members    User[]
+    estimates  Estimate[]
+    pricelists Pricelist[]
+    models     TakeoffModel[]
+}
+
+model Pricelist {
+    id          String  @id @default(cuid())
+    name        String
+    description String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    items PricelistItem[]
+
+    owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    ownerId String
+
+    teams Team[]
+}
+
+model PricelistItem {
+    id           String @id @default(cuid())
+    name         String
+    pricePerUnit Float
+    currency     String
+    category     String
+    unitType     String
+
+    createdAt DateTime @default(now())
+
+    pricelist   Pricelist @relation(fields: [pricelistId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    pricelistId String
+}
+
+model TakeoffModel {
+    id          String  @id @default(cuid())
+    name        String
+    description String?
+    code        String  @default("")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    ownerId String
+
+    teams Team[]
+
+    inputs    CustomInputElement[]
+    variables CustomVariable[]
+    Estimate  Estimate[]
+}
+
+model CustomInputElement {
+    id           String  @id @default(cuid())
+    name         String
+    description  String?
+    type         String
+    defaultValue String
+    label        String
+    props        String
+    order        Int     @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    takeoffModel   TakeoffModel @relation(fields: [takeoffModelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    takeoffModelId String
+}
+
+model CustomVariable {
+    id                String  @id @default(cuid())
+    name              String
+    description       String?
+    type              String
+    value             String
+    // Used to determine if it needs to be automatically garbage collected.
+    isManuallyCreated Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    takeoffModel   TakeoffModel @relation(fields: [takeoffModelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    takeoffModelId String
+
+    @@unique([takeoffModelId, name])
+}

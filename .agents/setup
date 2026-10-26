@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+repo_root="$PWD"
+SECONDS=0
+
+echo '==> Preparing the pinned Node toolchain'
+node_version="$(cat .node-version)"
+npm_version='11.21.1'
+node_home="$HOME/.local/share/estimator-node"
+if [[ ! -x "$node_home/bin/node" || ! -x "$node_home/bin/npm" ]] ||
+  [[ "$("$node_home/bin/node" --version)" != "v$node_version" ]] ||
+  [[ "$("$node_home/bin/npm" --version)" != "$npm_version" ]]; then
+  npm install --global --prefix "$node_home" --no-audit --no-fund "node@$node_version" "npm@$npm_version"
+fi
+export PATH="$node_home/bin:$PATH"
+
+# Amp and supervised services start in separate login shells.
+profile_marker='# estimator orb Node toolchain'
+if ! grep -Fqx "$profile_marker" "$HOME/.bash_profile" 2>/dev/null; then
+  cat >> "$HOME/.bash_profile" <<EOF
+
+$profile_marker
+case "\$PWD/" in
+  "$repo_root/"*)
+    case ":\$PATH:" in
+      *":$node_home/bin:"*) ;;
+      *) export PATH="$node_home/bin:\$PATH" ;;
+    esac
+    ;;
+esac
+EOF
+fi
+echo "==> Toolchain ready after ${SECONDS}s: $(node --version), npm $(npm --version)"
+
+echo '==> Installing locked dependencies'
+# npm ci replaces packages even on a warm filesystem.
+# Keep an exact install when a stale snapshot has unchanged dependency inputs.
+dependency_key="$( { sha256sum package.json package-lock.json .npmrc; node --version; npm --version; } | sha256sum)"
+if [[ ! -f node_modules/.amp-install ]] || [[ "$(cat node_modules/.amp-install)" != "$dependency_key" ]]; then
+  npm ci --include=dev --no-audit --no-fund
+  printf '%s\n' "$dependency_key" > node_modules/.amp-install
+else
+  echo 'Reusing unchanged locked dependencies'
+fi
+echo "==> Dependencies ready after ${SECONDS}s"
+
+[[ -f .env ]] || cp -- .env.example .env
+
+echo '==> Generating Prisma client and icons'
+npx --no-install prisma generate
+npm run build:icons
+
+# Never seed an existing database: the repository seed deletes all user data.
+# Explicit paths keep setup away from externally configured databases.
+echo '==> Preparing local SQLite database'
+seed_database=false
+[[ -f prisma/data.db ]] || seed_database=true
+export DATABASE_URL='file:./data.db?connection_limit=1'
+export DATABASE_PATH='./prisma/data.db'
+export CACHE_DATABASE_PATH='./other/cache.db'
+npx --no-install prisma migrate deploy
+if [[ "$seed_database" == true ]]; then
+  npx --no-install prisma db seed
+fi
+
+echo "==> Orb setup finished in ${SECONDS}s"

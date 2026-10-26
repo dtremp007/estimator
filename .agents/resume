@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+# No daemon is needed for SQLite. Restore only missing local configuration;
+# toolchain, dependencies, and database are retained in the snapshot.
+[[ -f .env ]] || cp -- .env.example .env
+echo 'Orb ready. Start the app with npm run dev; run unit tests with npm test -- --run.'

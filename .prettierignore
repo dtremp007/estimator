@@ -1,0 +1,12 @@
+node_modules
+
+/build
+/public/build
+/server-build
+.env
+
+/tests/fixtures/email/*.json
+/coverage
+/prisma/migrations
+
+package-lock.json

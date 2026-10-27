@@ -129,11 +129,9 @@ app.use(
 	}),
 )
 
-// When running tests or running in development, we want to effectively disable
-// rate limiting because playwright tests are very fast and we don't want to
-// have to wait for the rate limit to reset between tests.
-const maxMultiple =
-	!IS_PROD || process.env.PLAYWRIGHT_TEST_BASE_URL ? 10_000 : 1
+// Effectively disable rate limiting outside production so local testing
+// doesn't have to wait for the rate limit to reset.
+const maxMultiple = IS_PROD ? 1 : 10_000
 const rateLimitDefault = {
 	windowMs: 60 * 1000,
 	max: 1000 * maxMultiple,

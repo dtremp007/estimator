@@ -79,10 +79,6 @@ if $fresh_db; then
 fi
 done_step
 
-step "Playwright Chromium"
-npx playwright install chromium
-done_step
-
 guidance_marker="<!-- estimator orb guidance -->"
 if ! grep -Fqx "$guidance_marker" "$HOME/.config/amp/AGENTS.md" 2>/dev/null; then
 	mkdir -p "$HOME/.config/amp"

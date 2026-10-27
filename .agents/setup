@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb for this repository. Runs on fresh and stale snapshots,
+# so every step must be idempotent and cheap when already done.
+set -euo pipefail
+export PRISMA_HIDE_UPDATE_MESSAGE=1
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+step() {
+	echo "==> $1"
+	SECONDS=0
+}
+done_step() { echo "    (${SECONDS}s)"; }
+
+# Node 20 matches package.json engines and other/Dockerfile. The orb's default
+# Node is newer and cannot load the better-sqlite3 native module.
+node_version="v20.20.2"
+node_dir="$HOME/.local/share/estimator-node"
+
+step "Node $node_version"
+if [[ "$("$node_dir/bin/node" -v 2>/dev/null || true)" != "$node_version" ]]; then
+	tarball="node-$node_version-linux-x64.tar.xz"
+	tmp="$(mktemp -d)"
+	curl -fsSL -o "$tmp/$tarball" "https://nodejs.org/dist/$node_version/$tarball"
+	curl -fsSL -o "$tmp/SHASUMS256.txt" "https://nodejs.org/dist/$node_version/SHASUMS256.txt"
+	(cd "$tmp" && grep " $tarball\$" SHASUMS256.txt | sha256sum -c -)
+	rm -rf "$node_dir"
+	mkdir -p "$node_dir"
+	tar -xJf "$tmp/$tarball" -C "$node_dir" --strip-components=1
+	rm -rf "$tmp"
+fi
+export PATH="$node_dir/bin:$PATH"
+
+# Amp's login shells take PATH from ~/.env after ~/.bash_profile runs, so a
+# profile hook is overridden. ~/.local/bin precedes /usr/local/bin there.
+mkdir -p "$HOME/.local/bin"
+for bin in node npm npx corepack; do
+	ln -sfn "$node_dir/bin/$bin" "$HOME/.local/bin/$bin"
+done
+done_step
+
+# npm cannot tell that restored native modules were built for a different Node
+# ABI, so reinstall only when the lockfile or Node version changes.
+step "npm dependencies"
+stamp="$(cat package-lock.json .npmrc | sha256sum | cut -d' ' -f1)-$(node -v)"
+stamp_file="node_modules/.orb-setup-stamp"
+if [[ "$(cat "$stamp_file" 2>/dev/null || true)" != "$stamp" ]]; then
+	npm ci --no-audit --no-fund
+	echo "$stamp" >"$stamp_file"
+else
+	echo "    up to date"
+fi
+done_step
+
+step "Environment file"
+[ -f .env ] || cp -- .env.example .env
+done_step
+
+step "Icons"
+npm run build:icons --silent
+done_step
+
+step "Database"
+fresh_db=false
+[ -f prisma/data.db ] || fresh_db=true
+npx prisma generate >/dev/null
+if ! npx prisma migrate deploy; then
+	# Dev databases in orbs are disposable: keep the broken one aside and rebuild.
+	broken="prisma/data.db.broken-$(date +%s)"
+	echo "    migrations failed; moving database to $broken and recreating it"
+	mv prisma/data.db "$broken"
+	rm -f prisma/data.db-journal
+	fresh_db=true
+	npx prisma migrate deploy
+fi
+if $fresh_db; then
+	# The seed wipes the database first, so only run it on a new database.
+	npx prisma db seed
+fi
+done_step
+
+step "Playwright Chromium"
+npx playwright install chromium
+done_step
+
+guidance_marker="<!-- estimator orb guidance -->"
+if ! grep -Fqx "$guidance_marker" "$HOME/.config/amp/AGENTS.md" 2>/dev/null; then
+	mkdir -p "$HOME/.config/amp"
+	cat >>"$HOME/.config/amp/AGENTS.md" <<EOF
+
+$guidance_marker
+# estimator orb notes
+
+- Node 20 (matching package.json engines) lives in $node_dir and is symlinked into ~/.local/bin.
+  If \`node -v\` is not v20, prefix commands with \`PATH=$node_dir/bin:\$PATH\`.
+- SQLite database: prisma/data.db (migrated and seeded by .agents/setup).
+  Seeded login: username \`kody\`, password \`123456\`.
+- Dev server: \`amp orb services ensure\` starts \`npm run dev\` on port 3000.
+EOF
+fi

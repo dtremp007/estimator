@@ -1,0 +1,6 @@
+services:
+  dev:
+    command: npm run dev
+    port: 3000
+    portal:
+      title: Estimator dev server

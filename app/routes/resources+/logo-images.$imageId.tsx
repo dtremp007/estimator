@@ -13,7 +13,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
   invariantResponse(image, 'Image not found', { status: 404 })
 
-  return new Response(image.blob, {
+  return new Response(new Uint8Array(image.blob), {
     headers: {
       'Content-Type': image.contentType,
       'Content-Length': Buffer.byteLength(image.blob).toString(),

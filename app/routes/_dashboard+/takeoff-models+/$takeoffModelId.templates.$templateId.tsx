@@ -4,7 +4,7 @@ import {
 	getTextareaProps,
 	useForm,
 } from '@conform-to/react'
-import { getZodConstraint, parseWithZod } from '@conform-to/zod'
+import { getZodConstraint, parseWithZod } from '@conform-to/zod/v4'
 import { invariantResponse } from '@epic-web/invariant'
 import { type Prisma } from '@prisma/client'
 import { parseFormData } from '@remix-run/form-data-parser'

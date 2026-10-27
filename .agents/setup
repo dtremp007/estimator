@@ -12,9 +12,10 @@ step() {
 }
 done_step() { echo "    (${SECONDS}s)"; }
 
-# Node 20 matches package.json engines and other/Dockerfile. The orb's default
-# Node is newer and cannot load the better-sqlite3 native module.
-node_version="v20.20.2"
+# Node 24 matches .node-version, package.json engines and other/Dockerfile.
+# The orb's default Node is newer, which native modules like better-sqlite3
+# are not built for.
+node_version="v24.22.1"
 node_dir="$HOME/.local/share/estimator-node"
 
 step "Node $node_version"
@@ -87,8 +88,8 @@ if ! grep -Fqx "$guidance_marker" "$HOME/.config/amp/AGENTS.md" 2>/dev/null; the
 $guidance_marker
 # estimator orb notes
 
-- Node 20 (matching package.json engines) lives in $node_dir and is symlinked into ~/.local/bin.
-  If \`node -v\` is not v20, prefix commands with \`PATH=$node_dir/bin:\$PATH\`.
+- Node 24 (matching .node-version) lives in $node_dir and is symlinked into ~/.local/bin.
+  If \`node -v\` is not v24, prefix commands with \`PATH=$node_dir/bin:\$PATH\`.
 - SQLite database: prisma/data.db (migrated and seeded by .agents/setup).
   Seeded login: username \`kody\`, password \`123456\`.
 - Dev server: \`amp orb services ensure\` starts \`npm run dev\` on port 3000.

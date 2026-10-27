@@ -1,8 +1,12 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { redirect, useLoaderData } from '@remix-run/react'
 import { Printer } from 'lucide-react'
 import React, { useState } from 'react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	redirect,
+	useLoaderData,
+} from 'react-router'
 import _ from 'underscore'
 import { Button } from '#app/components/ui/button'
 import { requireUserId } from '#app/utils/auth.server.js'
@@ -67,7 +71,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	const compiledTemplate = _.template(template.bodyTemplate)
 	const body = compiledTemplate(templateData)
 
-	return json({
+	return data({
 		estimate,
 		template,
 		body,
@@ -181,8 +185,7 @@ export default function EstimatePrintout() {
 	)
 }
 
-export interface InputProps
-	extends React.InputHTMLAttributes<HTMLInputElement> {}
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
 	({ className, type, ...props }, ref) => {

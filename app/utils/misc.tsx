@@ -1,7 +1,7 @@
-import { useFormAction, useNavigation } from '@remix-run/react'
 import { clsx, type ClassValue } from 'clsx'
 import { formatDistanceToNow } from 'date-fns'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFormAction, useNavigation } from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { extendTailwindMerge } from 'tailwind-merge'
 import { extendedTheme } from './extended-theme.ts'
@@ -299,11 +299,13 @@ export function formatEntityTimeAgo<
 	}
 }
 
-export function formatListTimeAgo<T extends { updatedAt: Date; createdAt: Date }>(list: T[]) {
+export function formatListTimeAgo<
+	T extends { updatedAt: Date; createdAt: Date },
+>(list: T[]) {
 	return list.map(item => ({
 		...item,
 		updatedAt: formatDistanceToNow(new Date(item.updatedAt)),
-        createdAt: formatDistanceToNow(new Date(item.createdAt)),
+		createdAt: formatDistanceToNow(new Date(item.createdAt)),
 	}))
 }
 

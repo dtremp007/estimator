@@ -1,12 +1,12 @@
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	type ActionFunctionArgs,
-	json,
-	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { useFetcher } from '@remix-run/react'
 import { Pen, UserMinus, UserPlus } from 'lucide-react'
 import React from 'react'
+import {
+	data,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	useFetcher,
+} from 'react-router'
 import { Badge } from '#app/components/ui/badge.js'
 import { Button } from '#app/components/ui/button'
 import {
@@ -64,7 +64,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const collaborations = await getCollaborators(entityId, entityType)
 
-	return json({ collaborations })
+	return data({ collaborations })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -82,7 +82,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			} catch (error: Error | any) {
 				const entityId = formData.get('entityId') as string
 
-				return json(
+				return data(
 					{
 						error: { message: error.message },
 						collaborations: await getCollaborators(entityId, entityType),
@@ -94,7 +94,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			return handleRemoveCollaborator(request, userId, formData, entityType)
 	}
 
-	return json({
+	return data({
 		collaborations: getCollaborators(formData.get('id') as string, entityType),
 	})
 }
@@ -156,7 +156,7 @@ export function SharingDialog({
 								key={collaboration.user.id}
 								className="flex items-center justify-between py-2"
 							>
-								<div className='w-full pr-4'>
+								<div className="w-full pr-4">
 									<div className="flex w-full justify-between">
 										<span>{collaboration.user.name}</span>
 										<Badge>{collaboration.accessLevel}</Badge>
@@ -296,7 +296,7 @@ async function handleEntityShare(formData: FormData, entityType: string) {
 		})
 	}
 
-	return json({
+	return data({
 		collaborations: await getCollaborators(entityId, entityType),
 	})
 }
@@ -330,5 +330,5 @@ async function handleRemoveCollaborator(
 
 	const collaborations = await getCollaborators(entityId, entityType)
 
-	return json({ collaborations })
+	return data({ collaborations })
 }

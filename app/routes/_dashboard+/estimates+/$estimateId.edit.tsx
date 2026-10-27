@@ -1,19 +1,17 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { Calculator, EditIcon, LoaderCircle, Users } from 'lucide-react'
+import React from 'react'
 import {
+	data,
 	type ActionFunctionArgs,
-	json,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import {
 	Form,
 	Link,
 	redirect,
 	useFetcher,
 	useLoaderData,
 	useSearchParams,
-} from '@remix-run/react'
-import { Calculator, EditIcon, LoaderCircle, Users } from 'lucide-react'
-import React from 'react'
+} from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { SidebarLayout } from '#app/components/sidebar-layout.js'
@@ -88,7 +86,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	])
 
 	if (!estimate.model) {
-		return json({
+		return data({
 			estimate: {
 				...estimate,
 				model: null,
@@ -107,7 +105,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		}, new FormData()),
 	)
 
-	return json({
+	return data({
 		estimate: {
 			name: estimate.name,
 			model: takeoffModel,

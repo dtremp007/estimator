@@ -1,17 +1,27 @@
-import { invariant } from "@epic-web/invariant"
-import { type LoaderFunctionArgs, redirect, type ActionFunctionArgs } from "@remix-run/node"
-import { getImpersonator, IMPERSONATOR_SESSION_KEY, sessionKey } from "#app/utils/auth.server.js"
-import { prisma } from "#app/utils/db.server.js"
-import { requireAdmin } from "#app/utils/permissions.server.js"
-import { authSessionStorage } from "#app/utils/session.server.js"
+import { invariant } from '@epic-web/invariant'
+import {
+	type LoaderFunctionArgs,
+	redirect,
+	type ActionFunctionArgs,
+} from 'react-router'
+import {
+	getImpersonator,
+	IMPERSONATOR_SESSION_KEY,
+	sessionKey,
+} from '#app/utils/auth.server.js'
+import { prisma } from '#app/utils/db.server.js'
+import { requireAdmin } from '#app/utils/permissions.server.js'
+import { authSessionStorage } from '#app/utils/session.server.js'
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
-    const intent = formData.get('intent') as string
+	const intent = formData.get('intent') as string
 
 	invariant(intent === 'start' || intent === 'stop', 'invalid intent')
 
-	const cookieSession = await authSessionStorage.getSession(request.headers.get('cookie'))
+	const cookieSession = await authSessionStorage.getSession(
+		request.headers.get('cookie'),
+	)
 
 	if (intent === 'start') {
 		const userId = formData.get('userId')?.toString()

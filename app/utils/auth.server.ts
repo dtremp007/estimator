@@ -1,6 +1,6 @@
 import { type Connection, type Password, type User } from '@prisma/client'
-import { redirect } from '@remix-run/node'
 import bcrypt from 'bcryptjs'
+import { redirect } from 'react-router'
 import { Authenticator } from 'remix-auth'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { connectionSessionStorage, providers } from './connections.server.ts'
@@ -54,7 +54,7 @@ export async function requireUserId(
 		redirectTo =
 			redirectTo === null
 				? null
-				: redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`
+				: (redirectTo ?? `${requestUrl.pathname}${requestUrl.search}`)
 		const loginParams = redirectTo ? new URLSearchParams({ redirectTo }) : null
 		const loginRedirect = ['/login', loginParams?.toString()]
 			.filter(Boolean)
@@ -241,7 +241,9 @@ export async function verifyUserPassword(
 }
 
 export const getImpersonator = async (request: Request) => {
-	const cookieSession = await authSessionStorage.getSession(request.headers.get('cookie'))
+	const cookieSession = await authSessionStorage.getSession(
+		request.headers.get('cookie'),
+	)
 
 	const impersonatorSessionId = cookieSession.get(IMPERSONATOR_SESSION_KEY)
 

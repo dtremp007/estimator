@@ -1,11 +1,14 @@
 import { invariantResponse } from '@epic-web/invariant'
-import {
-	type LoaderFunctionArgs,
-	json,
-	type ActionFunctionArgs,
-} from '@remix-run/node'
-import { Form, Link, redirect, useLoaderData } from '@remix-run/react'
 import { Users } from 'lucide-react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	Form,
+	Link,
+	redirect,
+	useLoaderData,
+} from 'react-router'
 import { z } from 'zod'
 import { Button } from '#app/components/ui/button.js'
 import {
@@ -66,7 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	invariantResponse(takeoffModels, 'Not found', { status: 404 })
 
-	return json({ takeoffModels: formatListTimeAgo(takeoffModels) })
+	return data({ takeoffModels: formatListTimeAgo(takeoffModels) })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -84,7 +87,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 			},
 		})
 
-        return redirect('/takeoff-models')
+		return redirect('/takeoff-models')
 	}
 
 	return null
@@ -111,9 +114,7 @@ export default function TakeoffModels() {
 					</div>
 					<div className="ml-auto">
 						<Button asChild className="text-nowrap">
-							<Link to='new'>
-								New Model
-							</Link>
+							<Link to="new">New Model</Link>
 						</Button>
 					</div>
 				</CardHeader>
@@ -146,13 +147,13 @@ export default function TakeoffModels() {
 												disabled={!canShare(model)}
 											/>
 											<Form method="post">
-                                                <input type="hidden" name="id" value={model.id} />
+												<input type="hidden" name="id" value={model.id} />
 												<Button
 													type="submit"
 													variant="ghost"
 													disabled={model.isShared}
-                                                    name='intent'
-                                                    value='delete'
+													name="intent"
+													value="delete"
 												>
 													<Icon name="trash" />
 												</Button>

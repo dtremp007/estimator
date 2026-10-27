@@ -1,12 +1,15 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
+import React from 'react'
 import {
+	data,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-	json,
-} from '@remix-run/node'
-import { Form, redirect, useActionData, useLoaderData } from '@remix-run/react'
-import React from 'react'
+	Form,
+	redirect,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.js'
 import { Button } from '#app/components/ui/button.js'
@@ -49,7 +52,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		},
 	})
 
-	return json({ variable })
+	return data({ variable })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -69,7 +72,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		})
 
 		if (submission.status !== 'success') {
-			return json(
+			return data(
 				{
 					result: submission.reply({
 						formErrors: takeoffModelId
@@ -84,7 +87,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		const { id, name, type, value } = submission.value
 
 		if (!valueMatchesType(value, type)) {
-			return json(
+			return data(
 				{
 					result: submission.reply({
 						formErrors: ['Value does not match type.'],

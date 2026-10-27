@@ -6,19 +6,17 @@ import {
 } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import {
+	data,
 	redirect,
-	json,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import {
 	type Params,
 	Form,
 	useActionData,
 	useLoaderData,
 	useSearchParams,
-} from '@remix-run/react'
+} from 'react-router'
 import { safeRedirect } from 'remix-utils/safe-redirect'
 import { z } from 'zod'
 import { CheckboxField, ErrorList, Field } from '#app/components/forms.tsx'
@@ -94,7 +92,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	const formError = authSession.get(authenticator.sessionErrorKey)
 	const hasError = typeof formError === 'string'
 
-	return json({
+	return data({
 		email,
 		status: 'idle',
 		submission: {
@@ -142,7 +140,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	})
 
 	if (submission.status !== 'success') {
-		return json(
+		return data(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
@@ -270,7 +268,7 @@ export default function SignupRoute() {
 					<div className="flex items-center justify-between gap-6">
 						<StatusButton
 							className="w-full"
-							status={isPending ? 'pending' : form.status ?? 'idle'}
+							status={isPending ? 'pending' : (form.status ?? 'idle')}
 							type="submit"
 							disabled={isPending}
 						>

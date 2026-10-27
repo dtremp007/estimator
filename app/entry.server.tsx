@@ -1,14 +1,15 @@
 import { PassThrough } from 'stream'
+import { createReadableStreamFromReadable } from '@react-router/node'
+
+import * as Sentry from '@sentry/node'
+import { isbot } from 'isbot'
+import { renderToPipeableStream } from 'react-dom/server'
 import {
-	createReadableStreamFromReadable,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 	type HandleDocumentRequestFunction,
-} from '@remix-run/node'
-import { RemixServer } from '@remix-run/react'
-import * as Sentry from '@sentry/remix'
-import { isbot } from 'isbot'
-import { renderToPipeableStream } from 'react-dom/server'
+	ServerRouter,
+} from 'react-router'
 import { getEnv, init } from './utils/env.server.ts'
 import { getInstanceInfo } from './utils/litefs.server.ts'
 import { NonceProvider } from './utils/nonce-provider.ts'
@@ -31,7 +32,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 		request,
 		responseStatusCode,
 		responseHeaders,
-		remixContext,
+		reactRouterContext,
 		loadContext,
 	] = args
 	const { currentInstance, primaryInstance } = await getInstanceInfo()
@@ -53,7 +54,11 @@ export default async function handleRequest(...args: DocRequestArgs) {
 
 		const { pipe, abort } = renderToPipeableStream(
 			<NonceProvider value={nonce}>
-				<RemixServer context={remixContext} url={request.url} />
+				<ServerRouter
+					nonce={nonce}
+					context={reactRouterContext}
+					url={request.url}
+				/>
 			</NonceProvider>,
 			{
 				[callbackName]: () => {
@@ -98,9 +103,5 @@ export function handleError(
 	error: unknown,
 	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
 ): void {
-	if (error instanceof Error) {
-		Sentry.captureRemixServerException(error, 'remix.server', request)
-	} else {
-		Sentry.captureException(error)
-	}
+	Sentry.captureException(error, { extra: { url: request.url } })
 }

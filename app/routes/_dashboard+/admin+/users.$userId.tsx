@@ -1,6 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import { Form, useLoaderData } from '@remix-run/react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	Form,
+	useLoaderData,
+} from 'react-router'
 import { DynamicTable } from '#app/components/dynamic-table.js'
 import { Button } from '#app/components/ui/button.js'
 import {
@@ -25,12 +29,15 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	invariantResponse(user, 'Not found', { status: 404 })
 
-	return json({ user })
+	return data({ user })
 }
 
 export default function User() {
 	const data = useLoaderData<typeof loader>()
-	const userInformation = Object.entries(data.user).map(([key, value]) => ({ key, value }))
+	const userInformation = Object.entries(data.user).map(([key, value]) => ({
+		key,
+		value,
+	}))
 
 	return (
 		<Card>

@@ -2,21 +2,18 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
+import { parseFormData } from '@remix-run/form-data-parser'
+import { useState } from 'react'
 import {
-	json,
+	data,
 	redirect,
-	unstable_createMemoryUploadHandler,
-	unstable_parseMultipartFormData,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
-} from '@remix-run/node'
-import {
 	Form,
 	useActionData,
 	useLoaderData,
 	useNavigation,
-} from '@remix-run/react'
-import { useState } from 'react'
+} from 'react-router'
 import { z } from 'zod'
 import { ErrorList } from '#app/components/forms.tsx'
 import { Button } from '#app/components/ui/button.tsx'
@@ -67,15 +64,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		},
 	})
 	invariantResponse(user, 'User not found', { status: 404 })
-	return json({ user })
+	return data({ user })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
 	const userId = await requireUserId(request)
-	const formData = await unstable_parseMultipartFormData(
-		request,
-		unstable_createMemoryUploadHandler({ maxPartSize: MAX_SIZE }),
-	)
+	const formData = await parseFormData(request, { maxFileSize: MAX_SIZE })
 
 	const submission = await parseWithZod(formData, {
 		schema: PhotoFormSchema.transform(async data => {
@@ -93,7 +87,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	})
 
 	if (submission.status !== 'success') {
-		return json(
+		return data(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
@@ -199,7 +193,7 @@ export default function PhotoRoute() {
 							pendingIntent === 'submit'
 								? 'pending'
 								: lastSubmissionIntent === 'submit'
-									? form.status ?? 'idle'
+									? (form.status ?? 'idle')
 									: 'idle'
 						}
 					>
@@ -225,7 +219,7 @@ export default function PhotoRoute() {
 								pendingIntent === 'delete'
 									? 'pending'
 									: lastSubmissionIntent === 'delete'
-										? form.status ?? 'idle'
+										? (form.status ?? 'idle')
 										: 'idle'
 							}
 						>

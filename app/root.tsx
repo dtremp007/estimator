@@ -1,15 +1,14 @@
 import { useForm, getFormProps } from '@conform-to/react'
 import { parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
+import { useRef } from 'react'
 import {
-	json,
+	data,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 	type HeadersFunction,
 	type LinksFunction,
 	type MetaFunction,
-} from '@remix-run/node'
-import {
 	Form,
 	Link,
 	Links,
@@ -21,9 +20,7 @@ import {
 	useFetchers,
 	useLoaderData,
 	useSubmit,
-} from '@remix-run/react'
-import { withSentry } from '@sentry/remix'
-import { useRef } from 'react'
+} from 'react-router'
 import { HoneypotProvider } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from './components/error-boundary.tsx'
@@ -122,10 +119,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	}
 
 	const { toast, headers: toastHeaders } = await getToast(request)
-	const honeyProps = honeypot.getInputProps()
+	const honeyProps = await honeypot.getInputProps()
 	const impersonator = (await getImpersonator(request))?.user
 
-	return json(
+	return data(
 		{
 			user,
 			impersonator,
@@ -174,7 +171,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const responseInit = {
 		headers: { 'set-cookie': setTheme(theme) },
 	}
-	return json({ result: submission.reply() }, responseInit)
+	return data({ result: submission.reply() }, responseInit)
 }
 
 function Document({
@@ -186,7 +183,7 @@ function Document({
 	children: React.ReactNode
 	nonce: string
 	theme?: Theme
-	env?: Record<string, string>
+	env?: Record<string, string | undefined>
 }) {
 	return (
 		<html lang="en" className={`${theme} h-full`}>
@@ -299,7 +296,7 @@ function AppWithProviders() {
 	)
 }
 
-export default withSentry(AppWithProviders)
+export default AppWithProviders
 
 function UserDropdown() {
 	const user = useUser()

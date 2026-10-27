@@ -1,14 +1,14 @@
 import { useMediaQuery } from '@mantine/hooks'
-import { Link, useLocation, useMatches } from '@remix-run/react'
 import {
 	Box,
 	Calculator,
 	Home,
 	ListChecks,
 	MenuIcon,
-    Users,
+	Users,
 } from 'lucide-react'
 import React from 'react'
+import { Link, useLocation, useMatches } from 'react-router'
 import {
 	Drawer,
 	DrawerClose,
@@ -26,32 +26,32 @@ const navItems = [
 		icon: Home,
 		label: 'Dashboard',
 		href: '/dashboard',
-        role: 'user'
+		role: 'user',
 	},
 	{
 		icon: Calculator,
 		label: 'Estimations',
 		href: '/estimates',
-        role: 'user'
+		role: 'user',
 	},
 	{
 		icon: ListChecks,
 		label: 'Prices',
 		href: '/pricelists',
-        role: 'user'
+		role: 'user',
 	},
 	{
 		icon: Box,
 		label: 'Models',
 		href: '/takeoff-models',
-        role: 'user'
+		role: 'user',
 	},
-    {
-        icon: Users,
-        label: 'Users',
-        href: '/admin/users',
-        role: 'admin',
-    }
+	{
+		icon: Users,
+		label: 'Users',
+		href: '/admin/users',
+		role: 'admin',
+	},
 ]
 
 interface DashboardProps {
@@ -63,7 +63,7 @@ export function DashboardNav({ className }: DashboardProps) {
 	const matches = useMatches()
 	const isDesktop = useMediaQuery('(min-width: 768px)')
 	const location = useLocation()
-    const user = useUser()
+	const user = useUser()
 
 	React.useEffect(() => {
 		if (!open && isDesktop) return
@@ -75,24 +75,24 @@ export function DashboardNav({ className }: DashboardProps) {
 	const Menu = (
 		<>
 			{navItems
-            .filter(item => user.roles.some(role => role.name === item.role))
-            .map((item, index) => (
-				<Link
-					key={index}
-					to={item.href}
-					className={cn(
-						'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-						{
-							'bg-muted text-primary': matches.some(
-								m => m.pathname === item.href,
-							),
-						},
-					)}
-				>
-					<item.icon className="h-4 w-4" />
-					{item.label}
-				</Link>
-			))}
+				.filter(item => user.roles.some(role => role.name === item.role))
+				.map((item, index) => (
+					<Link
+						key={index}
+						to={item.href}
+						className={cn(
+							'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
+							{
+								'bg-muted text-primary': matches.some(
+									m => m.pathname === item.href,
+								),
+							},
+						)}
+					>
+						<item.icon className="h-4 w-4" />
+						{item.label}
+					</Link>
+				))}
 		</>
 	)
 

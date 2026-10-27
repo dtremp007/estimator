@@ -1,12 +1,15 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import {
-	json,
+	data,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import { Form, Link, useActionData, useSearchParams } from '@remix-run/react'
+	Form,
+	Link,
+	useActionData,
+	useSearchParams,
+} from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -32,13 +35,13 @@ const LoginFormSchema = z.object({
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireAnonymous(request)
-	return json({})
+	return data({})
 }
 
 export async function action({ request }: ActionFunctionArgs) {
 	await requireAnonymous(request)
 	const formData = await request.formData()
-	checkHoneypot(formData)
+	await checkHoneypot(formData)
 	const submission = await parseWithZod(formData, {
 		schema: intent =>
 			LoginFormSchema.transform(async (data, ctx) => {
@@ -59,7 +62,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	})
 
 	if (submission.status !== 'success' || !submission.value.session) {
-		return json(
+		return data(
 			{ result: submission.reply({ hideFields: ['password'] }) },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
@@ -158,7 +161,7 @@ export default function LoginPage() {
 							<div className="flex items-center justify-between gap-6 pt-3">
 								<StatusButton
 									className="w-full"
-									status={isPending ? 'pending' : form.status ?? 'idle'}
+									status={isPending ? 'pending' : (form.status ?? 'idle')}
 									type="submit"
 									disabled={isPending}
 								>

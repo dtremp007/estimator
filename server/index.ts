@@ -1,7 +1,5 @@
 import crypto from 'crypto'
-import { createRequestHandler as _createRequestHandler } from '@remix-run/express'
-import { type ServerBuild, installGlobals } from '@remix-run/node'
-import * as Sentry from '@sentry/remix'
+import { createRequestHandler } from '@react-router/express'
 import { ip as ipAddress } from 'address'
 import chalk from 'chalk'
 import closeWithGrace from 'close-with-grace'
@@ -11,16 +9,11 @@ import rateLimit from 'express-rate-limit'
 import getPort, { portNumbers } from 'get-port'
 import helmet from 'helmet'
 import morgan from 'morgan'
-
-installGlobals()
+import { type ServerBuild } from 'react-router'
 
 const MODE = process.env.NODE_ENV ?? 'development'
 const IS_PROD = MODE === 'production'
 const IS_DEV = MODE === 'development'
-
-const createRequestHandler = IS_PROD
-	? Sentry.wrapExpressCreateRequestHandler(_createRequestHandler)
-	: _createRequestHandler
 
 const viteDevServer = IS_PROD
 	? undefined
@@ -67,13 +60,10 @@ app.use(compression())
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by')
 
-app.use(Sentry.Handlers.requestHandler())
-app.use(Sentry.Handlers.tracingHandler())
-
 if (viteDevServer) {
 	app.use(viteDevServer.middlewares)
 } else {
-	// Remix fingerprints its assets so we can cache forever.
+	// React Router fingerprints its assets so we can cache forever.
 	app.use(
 		'/assets',
 		express.static('build/client/assets', { immutable: true, maxAge: '1y' }),
@@ -197,7 +187,7 @@ app.use((req, res, next) => {
 
 async function getBuild() {
 	const build = viteDevServer
-		? viteDevServer.ssrLoadModule('virtual:remix/server-build')
+		? viteDevServer.ssrLoadModule('virtual:react-router/server-build')
 		: // @ts-ignore this should exist before running the server
 			// but it may not exist just yet.
 			await import('#build/server/index.js')

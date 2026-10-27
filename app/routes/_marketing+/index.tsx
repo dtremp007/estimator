@@ -1,6 +1,5 @@
-import { type MetaFunction } from '@remix-run/node'
-import { Link } from '@remix-run/react'
 import { Calculator } from 'lucide-react'
+import { type MetaFunction, Link } from 'react-router'
 import { Button } from '#app/components/ui/button.js'
 import { type logos } from './logos/logos.ts'
 
@@ -37,10 +36,7 @@ export default function Index() {
 					>
 						This an early release of the ToopJetalt App
 					</h1>
-					<p
-						data-paragraph
-						className="mt-6 text-xl/7 text-muted-foreground"
-					>
+					<p data-paragraph className="mt-6 text-xl/7 text-muted-foreground">
 						Things might be broken. I am working towards a v0.1.0 realease. You
 						can try it and report any issues{' '}
 						<a

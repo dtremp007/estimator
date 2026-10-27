@@ -1,13 +1,15 @@
 import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import {
-	json,
+	data,
 	redirect,
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import { Form, useActionData, useLoaderData } from '@remix-run/react'
+	Form,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
 import { ErrorList, Field } from '#app/components/forms.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
@@ -36,7 +38,7 @@ async function requireResetPasswordUsername(request: Request) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const resetPasswordUsername = await requireResetPasswordUsername(request)
-	return json({ resetPasswordUsername })
+	return data({ resetPasswordUsername })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -46,7 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		schema: ResetPasswordSchema,
 	})
 	if (submission.status !== 'success') {
-		return json(
+		return data(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
@@ -119,7 +121,7 @@ export default function ResetPasswordPage() {
 
 					<StatusButton
 						className="w-full"
-						status={isPending ? 'pending' : form.status ?? 'idle'}
+						status={isPending ? 'pending' : (form.status ?? 'idle')}
 						type="submit"
 						disabled={isPending}
 					>

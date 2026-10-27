@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { json } from '@remix-run/node'
+import { data } from 'react-router'
 import { z } from 'zod'
 import { requireUserId } from './auth.server.ts'
 import { prisma } from './db.server.ts'
@@ -71,7 +71,7 @@ export async function requireUserWithPermission(
 		})
 
 		if (!user) {
-			throw json(
+			throw data(
 				{
 					error: 'Unauthorized',
 					requiredPermission: permissionData,
@@ -97,7 +97,7 @@ export async function requireUserWithPermission(
 		}
 	}
 
-	const rawUser = await prisma.$queryRaw`
+	const rawUser = (await prisma.$queryRaw`
         SELECT
             u.id as userId,
             CASE
@@ -114,13 +114,13 @@ export async function requireUserWithPermission(
         LEFT JOIN collaboration c ON c.userId = u.id AND c.entityId = ${entity.id} AND c.entity = ${permissionData.entity}
         WHERE u.id = ${userId}
         LIMIT 1;
-` as unknown[]
+`) as unknown[]
 
 	try {
 		const user = PermissionDetailsSchema.parse(rawUser[0])
 		return user
 	} catch (error) {
-		throw json(
+		throw data(
 			{
 				error: 'Unauthorized',
 				requiredPermission: permissionData,
@@ -132,13 +132,12 @@ export async function requireUserWithPermission(
 }
 
 export function assignPermissionsToEntity<T extends Entity>(
-    entity: T,
-    details: Omit<PermissionDetails, 'userId'> & { userId?: string },
+	entity: T,
+	details: Omit<PermissionDetails, 'userId'> & { userId?: string },
 ) {
-    delete details.userId
-    return Object.assign(entity, details) as T & Omit<PermissionDetails, 'userId'>
+	delete details.userId
+	return Object.assign(entity, details) as T & Omit<PermissionDetails, 'userId'>
 }
-
 
 export async function requireUserWithRole(request: Request, name: string) {
 	const userId = await requireUserId(request)
@@ -147,7 +146,7 @@ export async function requireUserWithRole(request: Request, name: string) {
 		where: { id: userId, roles: { some: { name } } },
 	})
 	if (!user) {
-		throw json(
+		throw data(
 			{
 				error: 'Unauthorized',
 				requiredRole: name,
@@ -174,5 +173,5 @@ export async function isUserAdmin(userId: string) {
 }
 
 export async function requireAdmin(request: Request) {
-    return requireUserWithRole(request, 'admin')
+	return requireUserWithRole(request, 'admin')
 }

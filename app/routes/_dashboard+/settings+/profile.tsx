@@ -1,7 +1,6 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
-import { Outlet } from '@remix-run/react'
+import { data, type LoaderFunctionArgs, Outlet } from 'react-router'
 import { z } from 'zod'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { requireUserId } from '#app/utils/auth.server.ts'
@@ -22,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		select: { username: true },
 	})
 	invariantResponse(user, 'User not found', { status: 404 })
-	return json({})
+	return data({})
 }
 
 export default function EditUserProfile() {

@@ -7,17 +7,18 @@ import {
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import { invariantResponse } from '@epic-web/invariant'
 import { type Prisma } from '@prisma/client'
-import {
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	json,
-	redirect,
-	unstable_createMemoryUploadHandler,
-	unstable_parseMultipartFormData,
-} from '@remix-run/node'
-import { Form, useActionData, useLoaderData } from '@remix-run/react'
+import { parseFormData } from '@remix-run/form-data-parser'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import {
+	data,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
+	redirect,
+	Form,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
 import { z } from 'zod'
 import { ErrorList, Field } from '#app/components/forms.js'
 import { SidebarLayout } from '#app/components/sidebar-layout.js'
@@ -140,7 +141,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		throw new Response('Not found', { status: 404 })
 	}
 
-	return json({ template, takeoffModel })
+	return data({ template, takeoffModel })
 }
 
 export async function action({ params, request }: ActionFunctionArgs) {
@@ -149,10 +150,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 
 	invariantResponse(takeoffModelId, 'Takeoff model ID is required')
 
-	const formData = await unstable_parseMultipartFormData(
-		request,
-		unstable_createMemoryUploadHandler({ maxPartSize: MAX_SIZE }),
-	)
+	const formData = await parseFormData(request, { maxFileSize: MAX_SIZE })
 
 	const intent = formData.get('intent')
 	const estimateId = formData.get('estimateId')
@@ -177,7 +175,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
 	})
 
 	if (submission.status !== 'success') {
-		return json({ result: submission.reply() }, { status: 400 })
+		return data({ result: submission.reply() }, { status: 400 })
 	}
 
 	const {
@@ -424,14 +422,14 @@ export default function TemplateForm() {
 							type="submit"
 							name="intent"
 							value="preview"
-							status={isPending ? 'pending' : form.status ?? 'idle'}
+							status={isPending ? 'pending' : (form.status ?? 'idle')}
 						>
 							Save & Preview
 						</StatusButton>
 					) : null}
 					<StatusButton
 						type="submit"
-						status={isPending ? 'pending' : form.status ?? 'idle'}
+						status={isPending ? 'pending' : (form.status ?? 'idle')}
 					>
 						Save
 					</StatusButton>

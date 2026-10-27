@@ -1,5 +1,5 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { type ActionFunctionArgs, redirect } from '@remix-run/node'
+import { type ActionFunctionArgs, redirect } from 'react-router'
 import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
 import { requireUserWithPermission } from '#app/utils/permissions.server.js'

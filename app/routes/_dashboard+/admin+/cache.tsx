@@ -1,18 +1,16 @@
 import { invariantResponse } from '@epic-web/invariant'
 import {
-	json,
+	data,
 	redirect,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
-} from '@remix-run/node'
-import {
 	Form,
 	Link,
 	useFetcher,
 	useLoaderData,
 	useSearchParams,
 	useSubmit,
-} from '@remix-run/react'
+} from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary'
 import { Field } from '#app/components/forms.tsx'
 import { Spacer } from '#app/components/spacer.tsx'
@@ -34,7 +32,7 @@ import { requireUserWithRole } from '#app/utils/permissions.server.ts'
 
 export const handle = {
 	getSitemapEntries: () => null,
-    breadcrumb: 'Cache Admin',
+	breadcrumb: 'Cache Admin',
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -59,7 +57,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	} else {
 		cacheKeys = await getAllCacheKeys(limit)
 	}
-	return json({ cacheKeys, instance, instances, currentInstanceInfo })
+	return data({ cacheKeys, instance, instances, currentInstanceInfo })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -88,7 +86,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			throw new Error(`Unknown cache type: ${type}`)
 		}
 	}
-	return json({ success: true })
+	return data({ success: true })
 }
 
 export default function CacheAdminRoute() {

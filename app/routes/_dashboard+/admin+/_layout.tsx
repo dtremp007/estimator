@@ -1,5 +1,4 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import { Outlet } from '@remix-run/react'
+import { data, type LoaderFunctionArgs, Outlet } from 'react-router'
 import { requireUserWithRole } from '#app/utils/permissions.server.js'
 
 export const handle = {
@@ -9,7 +8,7 @@ export const handle = {
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireUserWithRole(request, 'admin')
 
-	return json({})
+	return data({})
 }
 
 export default function Layout() {

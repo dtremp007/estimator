@@ -1,6 +1,10 @@
 import { invariantResponse } from '@epic-web/invariant'
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	Link,
+	useLoaderData,
+} from 'react-router'
 import { Button } from '#app/components/ui/button.js'
 import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
@@ -27,7 +31,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	invariantResponse(estimate, 'Estimate not found', { status: 404 })
 
-	return json({
+	return data({
 		takeoffModelId: estimate.model?.id,
 	})
 }

@@ -2,8 +2,9 @@ import { invariantResponse } from '@epic-web/invariant'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { json, useLoaderData } from '@remix-run/react'
+	data,
+	useLoaderData,
+} from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.js'
 import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
@@ -29,7 +30,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 	})
 	invariantResponse(takeoffModel, 'Not found', { status: 404 })
 
-	return json({ takeoffModel: takeoffModel })
+	return data({ takeoffModel: takeoffModel })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -42,7 +43,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 	const code = formData.get('code')
 
 	if (typeof code !== 'string') {
-		return json(
+		return data(
 			{
 				error: ['Code is required'],
 			},
@@ -67,7 +68,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 		[] as any,
 	)
 
-	return json(
+	return data(
 		{
 			error: logs,
 		},

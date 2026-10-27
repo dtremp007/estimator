@@ -1,23 +1,15 @@
-import fs from 'node:fs'
 import * as ccase from 'change-case'
 import * as csv from 'fast-csv'
 
-export function parseCSVFromFile(file: string, options?: { deleteFile?: boolean }) {
+export function parseCSV(text: string) {
 	return new Promise((resolve, reject) => {
 		const rows: any[] = []
-		fs.createReadStream(file)
-			.pipe(
-				csv.parse({
-					headers: headers => headers.map(h => ccase.camelCase(h || '')),
-				}),
-			)
+		csv
+			.parseString(text, {
+				headers: headers => headers.map(h => ccase.camelCase(h || '')),
+			})
 			.on('error', error => reject(error))
 			.on('data', row => rows.push(row))
-			.on('end', () => {
-				if (options?.deleteFile) {
-					fs.rmSync(file)
-				}
-				resolve(rows)
-			})
+			.on('end', () => resolve(rows))
 	})
 }

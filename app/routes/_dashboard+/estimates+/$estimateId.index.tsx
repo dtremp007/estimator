@@ -1,8 +1,13 @@
-import { type LoaderFunctionArgs, json, redirect } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
 import * as ccase from 'change-case'
 import { DollarSign, Printer } from 'lucide-react'
 import React from 'react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	redirect,
+	Link,
+	useLoaderData,
+} from 'react-router'
 import _ from 'underscore'
 import { DynamicTable } from '#app/components/dynamic-table.js'
 import { Button } from '#app/components/ui/button'
@@ -81,7 +86,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		return redirect(`/estimates/${newEstimate.id}/edit`)
 	}
 
-	return json({ estimate })
+	return data({ estimate })
 }
 
 export default function Estimate() {

@@ -1,5 +1,9 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import { Link, useLoaderData } from '@remix-run/react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	Link,
+	useLoaderData,
+} from 'react-router'
 import { DynamicTable } from '#app/components/dynamic-table.js'
 import {
 	Card,
@@ -20,13 +24,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		},
 	})
 
-	return json({
+	return data({
 		users: formatListTimeAgo(users),
 	})
 }
 
 export default function Users() {
-    const { users } = useLoaderData<typeof loader>()
+	const { users } = useLoaderData<typeof loader>()
 
 	return (
 		<Card>
@@ -42,15 +46,15 @@ export default function Users() {
 							extract: user => <Link to={user.id}>{user.name}</Link>,
 						},
 						{
-                            key: 'createdAt',
-                            label: 'Created',
-                            format: (value) => `${value} ago`,
-                        },
-                        {
-                            key: 'roles',
-                            label: 'Roles',
-                            format: (value) => value.map(role => role.name).join(', '),
-                        }
+							key: 'createdAt',
+							label: 'Created',
+							format: value => `${value} ago`,
+						},
+						{
+							key: 'roles',
+							label: 'Roles',
+							format: value => value.map(role => role.name).join(', '),
+						},
 					]}
 				/>
 			</CardContent>

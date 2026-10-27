@@ -2,12 +2,14 @@ import { getFormProps, getInputProps, useForm } from '@conform-to/react'
 import { getZodConstraint, parseWithZod } from '@conform-to/zod'
 import * as E from '@react-email/components'
 import {
-	json,
+	data,
 	redirect,
 	type ActionFunctionArgs,
 	type MetaFunction,
-} from '@remix-run/node'
-import { Form, useActionData, useSearchParams } from '@remix-run/react'
+	Form,
+	useActionData,
+	useSearchParams,
+} from 'react-router'
 import { HoneypotInputs } from 'remix-utils/honeypot/react'
 import { z } from 'zod'
 import { GeneralErrorBoundary } from '#app/components/error-boundary.tsx'
@@ -31,7 +33,7 @@ const SignupSchema = z.object({
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData()
 
-	checkHoneypot(formData)
+	await checkHoneypot(formData)
 
 	const submission = await parseWithZod(formData, {
 		schema: SignupSchema.superRefine(async (data, ctx) => {
@@ -51,7 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		async: true,
 	})
 	if (submission.status !== 'success') {
-		return json(
+		return data(
 			{ result: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		)
@@ -73,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (response.status === 'success') {
 		return redirect(redirectTo.toString())
 	} else {
-		return json(
+		return data(
 			{
 				result: submission.reply({ formErrors: [response.error.message] }),
 			},
@@ -158,7 +160,7 @@ export default function SignupRoute() {
 					<ErrorList errors={form.errors} id={form.errorId} />
 					<StatusButton
 						className="w-full"
-						status={isPending ? 'pending' : form.status ?? 'idle'}
+						status={isPending ? 'pending' : (form.status ?? 'idle')}
 						type="submit"
 						disabled={isPending}
 					>

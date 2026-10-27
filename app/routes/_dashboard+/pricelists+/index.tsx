@@ -1,13 +1,16 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { parseFormData } from '@remix-run/form-data-parser'
+import { Users } from 'lucide-react'
 import {
-	json,
-	unstable_parseMultipartFormData as parseMultipartFormData,
+	data,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
 	redirect,
-} from '@remix-run/node'
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react'
-import { Users } from 'lucide-react'
+	Form,
+	Link,
+	useActionData,
+	useLoaderData,
+} from 'react-router'
 import { z } from 'zod'
 import { Button } from '#app/components/ui/button.js'
 import {
@@ -40,11 +43,7 @@ import {
 import { PricelistSchema } from '#app/lib/takeoff/pricelist.class.js'
 import { SharingDialog } from '#app/routes/resources+/sharing+/$entityType.js'
 import { requireUserId } from '#app/utils/auth.server.js'
-import { parseCSVFromFile } from '#app/utils/csv-parser.js'
-import {
-	csvUploadHandler,
-	isUploadedFile,
-} from '#app/utils/csv-upload-handler.js'
+import { parseCSV } from '#app/utils/csv-parser.js'
 import { prisma } from '#app/utils/db.server'
 import { formatListTimeAgo } from '#app/utils/misc.js'
 import { requireUserWithPermission } from '#app/utils/permissions.server.js'
@@ -86,11 +85,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	invariantResponse(pricelists, 'Not found', { status: 404 })
 
-	return json({ pricelists: formatListTimeAgo(pricelists) })
+	return data({ pricelists: formatListTimeAgo(pricelists) })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	const formData = await parseMultipartFormData(request, csvUploadHandler)
+	const formData = await parseFormData(request, { maxFileSize: 5_000_000 })
 	const intent = formData.get('intent')
 
 	switch (intent) {
@@ -189,14 +188,14 @@ async function handleCSVUpload(request: Request, formData: FormData) {
 	const name = formData.get('name') as string
 	const supplier = formData.get('supplier') as string
 
-	if (!isUploadedFile(file)) return null
+	if (!(file instanceof File) || file.type !== 'text/csv') return null
 
-	const pricelistFromCSV = await parseCSVFromFile(file.getFilePath())
+	const pricelistFromCSV = await parseCSV(await file.text())
 
 	const result = PricelistSchema.safeParse(pricelistFromCSV)
 
 	if (!result.success) {
-		return json({ error: result.error }, { status: 400 })
+		return data({ error: result.error }, { status: 400 })
 	}
 
 	const pricelistData = result.data
@@ -242,7 +241,7 @@ export function CSVUploadDialog() {
 							format.
 						</p>
 						<p>Here are the columns that are required, marked with *</p>
-						<ul className="list-inside list-disc ml-4 space-y-1">
+						<ul className="ml-4 list-inside list-disc space-y-1">
 							<li>Category *</li>
 							<li>Name *</li>
 							<li>Unit Type *</li>
@@ -255,7 +254,11 @@ export function CSVUploadDialog() {
 					</DialogDescription>
 					<pre className="text-red-500">{actionData?.error?.message}</pre>
 				</DialogHeader>
-				<Form method="post" encType="multipart/form-data" action='/pricelists?index'>
+				<Form
+					method="post"
+					encType="multipart/form-data"
+					action="/pricelists?index"
+				>
 					<input type="hidden" name="intent" value="upload" />
 					<div className="grid gap-4 py-4">
 						<div className="grid grid-cols-4 items-center gap-4">

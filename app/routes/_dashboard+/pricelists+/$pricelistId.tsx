@@ -1,11 +1,14 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { Users } from 'lucide-react'
+import React from 'react'
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
-} from '@remix-run/node'
-import { Form, json, redirect, useLoaderData } from '@remix-run/react'
-import { Users } from 'lucide-react'
-import React from 'react'
+	data,
+	Form,
+	redirect,
+	useLoaderData,
+} from 'react-router'
 import { GeneralErrorBoundary } from '#app/components/error-boundary'
 import { Button } from '#app/components/ui/button'
 import {
@@ -24,7 +27,10 @@ import {
 	TableRow,
 } from '#app/components/ui/table'
 import { prisma } from '#app/utils/db.server'
-import { assignPermissionsToEntity, requireUserWithPermission } from '#app/utils/permissions.server.js'
+import {
+	assignPermissionsToEntity,
+	requireUserWithPermission,
+} from '#app/utils/permissions.server.js'
 
 export const handle = {
 	breadcrumb: 'Pricelist',
@@ -45,15 +51,15 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	invariantResponse(_pricelist, 'Not found', { status: 404 })
 
-    const permissions = await requireUserWithPermission(
+	const permissions = await requireUserWithPermission(
 		request,
 		'read:pricelist',
 		_pricelist,
 	)
 
-    const pricelist = assignPermissionsToEntity(_pricelist, permissions)
+	const pricelist = assignPermissionsToEntity(_pricelist, permissions)
 
-	return json({ pricelist })
+	return data({ pricelist })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {

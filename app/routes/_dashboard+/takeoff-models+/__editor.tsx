@@ -1,12 +1,12 @@
 import { Editor, type Monaco } from '@monaco-editor/react'
+import { ArrowLeft } from 'lucide-react'
+import React from 'react'
 import {
 	useActionData,
 	useNavigate,
 	useSearchParams,
 	useSubmit,
-} from '@remix-run/react'
-import { ArrowLeft } from 'lucide-react'
-import React from 'react'
+} from 'react-router'
 import { Button } from '#app/components/ui/button.js'
 import typesFile from '#app/lib/takeoff/types.d.ts?raw'
 import { type action } from './$takeoffModelId.code'
@@ -87,13 +87,33 @@ export function ModelCodeEditor({ model }: ModelCodeEditorProps) {
 	}
 
 	return (
+		// const [form, fields] = useForm({
+		// 	id: 'model-editor',
+		// 	lastResult: actionData?.result,
+		// 	defaultValue: model,
+		// })
+		// <Form method="post" {...getFormProps(form)}>
+		// 	{model && <input type="hidden" name="id" value={model.id} />}
+		// 	<TextareaField
+		// 		labelProps={{ children: 'Content' }}
+		// 		textareaProps={{
+		//             rows: 20,
+		// 			...getTextareaProps(fields.code),
+		// 		}}
+		// 		errors={fields.code.errors}
+		// 	/>
+		// 	<div id={form.errorId}
+		//     className='text-red-500'
+		//     >{form.errors}</div>
+		// 	<Button>Save</Button>
+		// </Form>
 		<>
-			<div className="flex justify-end p-4 w-full">
+			<div className="flex w-full justify-end p-4">
 				{searchParams.has('goBackButton') && (
 					<Button
 						onClick={() => navigate(-1)}
-						className="flex items-center gap-3 mr-auto"
-                        variant='secondary'
+						className="mr-auto flex items-center gap-3"
+						variant="secondary"
 					>
 						<ArrowLeft size={16} />
 						{searchParams.get('goBackButton')}
@@ -123,25 +143,5 @@ export function ModelCodeEditor({ model }: ModelCodeEditorProps) {
 				onMount={handleEditorDidMount}
 			/>
 		</>
-		// const [form, fields] = useForm({
-		// 	id: 'model-editor',
-		// 	lastResult: actionData?.result,
-		// 	defaultValue: model,
-		// })
-		// <Form method="post" {...getFormProps(form)}>
-		// 	{model && <input type="hidden" name="id" value={model.id} />}
-		// 	<TextareaField
-		// 		labelProps={{ children: 'Content' }}
-		// 		textareaProps={{
-		//             rows: 20,
-		// 			...getTextareaProps(fields.code),
-		// 		}}
-		// 		errors={fields.code.errors}
-		// 	/>
-		// 	<div id={form.errorId}
-		//     className='text-red-500'
-		//     >{form.errors}</div>
-		// 	<Button>Save</Button>
-		// </Form>
 	)
 }

@@ -1,8 +1,11 @@
-import { type SerializeFrom } from '@remix-run/node'
-import { useRouteLoaderData } from '@remix-run/react'
+import { useRouteLoaderData } from 'react-router'
 import { type loader as rootLoader } from '#app/root.tsx'
 
-function isUser(user: any): user is SerializeFrom<typeof rootLoader>['user'] {
+function isUser(
+	user: any,
+): user is NonNullable<
+	ReturnType<typeof useRouteLoaderData<typeof rootLoader>>
+>['user'] {
 	return user && typeof user === 'object' && typeof user.id === 'string'
 }
 
@@ -28,8 +31,7 @@ type Action = 'create' | 'read' | 'write' | 'delete'
 type Entity = 'user' | 'estimate' | 'pricelist' | 'takeoffModel' | 'code'
 type Access = 'own' | 'any' | 'own,any' | 'any,own'
 export type PermissionString =
-	| `${Action}:${Entity}`
-	| `${Action}:${Entity}:${Access}`
+	`${Action}:${Entity}` | `${Action}:${Entity}:${Access}`
 
 export function parsePermissionString(permissionString: PermissionString) {
 	const [action, entity, access] = permissionString.split(':') as [

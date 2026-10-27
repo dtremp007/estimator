@@ -1,14 +1,14 @@
 import { invariantResponse } from '@epic-web/invariant'
 import { type SEOHandle } from '@nasa-gcn/remix-seo'
+import { useState } from 'react'
 import {
-	json,
+	data,
 	type LoaderFunctionArgs,
 	type ActionFunctionArgs,
-	type SerializeFrom,
 	type HeadersFunction,
-} from '@remix-run/node'
-import { useFetcher, useLoaderData } from '@remix-run/react'
-import { useState } from 'react'
+	useFetcher,
+	useLoaderData,
+} from 'react-router'
 import { Icon } from '#app/components/ui/icon.tsx'
 import { StatusButton } from '#app/components/ui/status-button.tsx'
 import {
@@ -81,7 +81,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		})
 	}
 
-	return json(
+	return data(
 		{
 			connections,
 			canDeleteConnections: await userCanDeleteConnections(userId),
@@ -120,7 +120,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		title: 'Deleted',
 		description: 'Your connection has been deleted.',
 	})
-	return json({ status: 'success' } as const, { headers: toastHeaders })
+	return data({ status: 'success' } as const, { headers: toastHeaders })
 }
 
 export default function Connections() {
@@ -162,7 +162,9 @@ function Connection({
 	connection,
 	canDelete,
 }: {
-	connection: SerializeFrom<typeof loader>['connections'][number]
+	connection: ReturnType<
+		typeof useLoaderData<typeof loader>
+	>['connections'][number]
 	canDelete: boolean
 }) {
 	const deleteFetcher = useFetcher<typeof action>()
@@ -197,7 +199,7 @@ function Connection({
 									status={
 										deleteFetcher.state !== 'idle'
 											? 'pending'
-											: deleteFetcher.data?.status ?? 'idle'
+											: (deleteFetcher.data?.status ?? 'idle')
 									}
 								>
 									<Icon name="cross-1" />

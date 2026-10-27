@@ -1,19 +1,17 @@
 import { invariantResponse } from '@epic-web/invariant'
+import { ArrowLeft, Check, LoaderCircle, PlusCircle } from 'lucide-react'
+import React from 'react'
 import {
+	data,
 	type LoaderFunctionArgs,
-	json,
 	type ActionFunctionArgs,
-} from '@remix-run/node'
-import {
 	Link,
 	redirect,
 	useFetcher,
 	useLoaderData,
 	useNavigate,
 	useSearchParams,
-} from '@remix-run/react'
-import { ArrowLeft, Check, LoaderCircle, PlusCircle } from 'lucide-react'
-import React from 'react'
+} from 'react-router'
 import { useSpinDelay } from 'spin-delay'
 import BasicTable from '#app/components/basic-table.js'
 import { DeleteEntityBtn } from '#app/components/delete-entity-btn.js'
@@ -158,9 +156,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 	const takeoffModel = assignPermissionsToEntity(_takeoffModel, permissions)
 
-	return json({
+	return data({
 		takeoffModel,
-        printTemplates: formatListTimeAgo(printTemplates),
+		printTemplates: formatListTimeAgo(printTemplates),
 	})
 }
 

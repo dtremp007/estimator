@@ -1,9 +1,9 @@
 import { invariantResponse } from '@epic-web/invariant'
 import {
+	data,
 	type LoaderFunctionArgs,
-	json,
 	type ActionFunctionArgs,
-} from '@remix-run/node'
+} from 'react-router'
 import { ListEntitiesPage } from '#app/components/list-entities-page.js'
 import { requireUserId } from '#app/utils/auth.server.js'
 import { prisma } from '#app/utils/db.server.js'
@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	invariantResponse(estimations, 'Not found', { status: 404 })
 
-	return json({ entities: formatListTimeAgo(estimations) })
+	return data({ entities: formatListTimeAgo(estimations) })
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {

@@ -1,5 +1,4 @@
-import { type TypedResponse } from '@remix-run/node'
-import { Form, Link, useLoaderData, useLocation } from '@remix-run/react'
+import { Form, Link, useLoaderData, useLocation } from 'react-router'
 import BasicTable from './basic-table'
 import { Button } from './ui/button'
 import { Icon } from './ui/icon'
@@ -12,8 +11,7 @@ export type ListEntitiesPageProps = {
 }
 
 export function ListEntitiesPage(props: ListEntitiesPageProps) {
-	const data =
-		useLoaderData<() => Promise<TypedResponse<{ entities: any[] }>>>()
+	const data = useLoaderData<() => { entities: any[] }>()
 	const location = useLocation()
 
 	return (
@@ -24,7 +22,9 @@ export function ListEntitiesPage(props: ListEntitiesPageProps) {
 				description={props.description}
 				actionButton={
 					<Button asChild className="text-nowrap">
-						<Link to={`${location.pathname}/new`}>New {props.title.slice(0, -1)}</Link>
+						<Link to={`${location.pathname}/new`}>
+							New {props.title.slice(0, -1)}
+						</Link>
 					</Button>
 				}
 			>

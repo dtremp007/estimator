@@ -1,6 +1,12 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node'
-import { Form, Link, redirect, useLoaderData } from '@remix-run/react'
 import { ArrowRight, Plus, Users } from 'lucide-react'
+import {
+	data,
+	type LoaderFunctionArgs,
+	Form,
+	Link,
+	redirect,
+	useLoaderData,
+} from 'react-router'
 import { Button } from '#app/components/ui/button.js'
 import { Checkbox } from '#app/components/ui/checkbox.js'
 import { requireUserId } from '#app/utils/auth.server.js'
@@ -19,7 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		listPricelists(userId),
 	])
 
-	return json({
+	return data({
 		models,
 		pricelists,
 	})

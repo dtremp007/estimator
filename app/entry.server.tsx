@@ -14,7 +14,8 @@ import { getInstanceInfo } from './utils/litefs.server.ts'
 import { NonceProvider } from './utils/nonce-provider.ts'
 import { makeTimings } from './utils/timing.server.ts'
 
-const ABORT_DELAY = 5000
+// Reject pending promises after this many ms; React aborts the render shortly after.
+export const streamTimeout = 5000
 
 init()
 global.ENV = getEnv()
@@ -79,7 +80,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 			},
 		)
 
-		setTimeout(abort, ABORT_DELAY)
+		setTimeout(abort, streamTimeout + 1000)
 	})
 }
 

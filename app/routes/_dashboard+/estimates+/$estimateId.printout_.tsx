@@ -3,6 +3,7 @@ import { Printer } from 'lucide-react'
 import React, { useState } from 'react'
 import {
 	data,
+	Link,
 	type LoaderFunctionArgs,
 	redirect,
 	useLoaderData,
@@ -80,19 +81,26 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 export default function EstimatePrintout() {
-	const { template, body, total } = useLoaderData<typeof loader>()
+	const { template, body, total, estimate } = useLoaderData<typeof loader>()
 	const [companyInfoRows, setCompanyInfoRows] = useState(
 		template.companyInfo.split('\n').length,
 	)
 	const [billToRows, setBillToRows] = useState(3)
-	const [quoteItemsRows, setQuoteItemsRows] = useState(15)
+	const [quoteItemsRows, setQuoteItemsRows] = useState(20)
 	const handlePrint = () => {
 		window.print()
 	}
 
 	return (
-		<div className="main-container mx-auto max-w-4xl print:p-8">
-			<div className="mb-8 flex justify-end print:hidden">
+		<div className="main mx-auto w-full max-w-4xl print:p-8 print:text-black">
+			<div className="mb-8 flex justify-end gap-4 print:hidden">
+				<Button asChild>
+					<Link
+						to={`/takeoff-models/${estimate.model?.id}/templates/${template.id}`}
+					>
+						Edit Template
+					</Link>
+				</Button>
 				<Button onClick={handlePrint}>
 					<Printer className="mr-2 h-4 w-4" />
 					Print
@@ -100,7 +108,7 @@ export default function EstimatePrintout() {
 			</div>
 			<div className="mb-8 flex justify-between">
 				<div className="flex w-full max-w-2xl flex-col">
-					<div className="mb-6 flex flex-col gap-2">
+					<div className="mb-6 flex flex-col gap-2 print:gap-0">
 						<Input
 							className="text-2xl font-bold"
 							defaultValue={template.companyName}
@@ -115,7 +123,10 @@ export default function EstimatePrintout() {
 						/>
 					</div>
 					<div className="">
-						<h2 className="mb-2 font-bold">BILL TO</h2>
+						<Input
+							className="mb-2 font-bold print:mb-0"
+							defaultValue="BILL TO"
+						></Input>
 						<Textarea
 							className="w-full"
 							rows={billToRows}
@@ -137,7 +148,7 @@ export default function EstimatePrintout() {
 			</div>
 
 			<div className="mb-4 text-right">
-				<span className="font-bold">Quote Date: </span>
+				<Input className="font-bold" defaultValue="Quote Date:"></Input>
 				<Input
 					className="text-right"
 					defaultValue={new Date().toLocaleDateString()}
@@ -149,7 +160,7 @@ export default function EstimatePrintout() {
 			{/* Quote content */}
 			<div className="mb-4 border-b">
 				<div className="mb-4">
-					<h3 className="font-bold">Quote Items</h3>
+					<Input className="font-bold" defaultValue="Quote Items"></Input>
 				</div>
 				<div className="mb-4">
 					<Textarea
@@ -158,26 +169,22 @@ export default function EstimatePrintout() {
 						rows={quoteItemsRows}
 						onChange={e => {
 							setQuoteItemsRows(
-								Math.max(15, e.currentTarget.value.split('\n').length),
+								Math.max(20, e.currentTarget.value.split('\n').length),
 							)
 						}}
 					/>
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-start justify-between">
+			<div className="flex flex-wrap items-baseline justify-between">
+				<Input
+					className="mb-2 flex-1 font-bold"
+					defaultValue={template.greeting}
+				></Input>
 				<div className="">
-					<p className="mb-2 font-bold">{template.greeting}</p>
-					{/* <h3 className="mb-2 font-bold">Terms & Instructions</h3>
-					<Textarea
-						className="h-24 w-full border p-2"
-						defaultValue="<Add payment requirements here, for example deposit amount and payment method>\n\n<Add terms here, e.g. warranty, returns policy...>"
-					/> */}
-				</div>
-				<div className="">
-					<div className="flex flex-wrap items-center justify-between text-2xl font-bold">
-						<span className="font-bold">TOTAL $</span>
-						<Input className="text-right max-sm:w-full" defaultValue={total} />
+					<div className="flex flex-wrap items-center justify-end text-2xl font-bold">
+						<span className="font-bold">TOTAL</span>
+						<Input className="max-w-[200px] text-right" defaultValue={total} />
 					</div>
 				</div>
 			</div>

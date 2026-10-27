@@ -1,102 +1,24 @@
-name: 🚀 Deploy
+name: 🚀 Deploy Production
 on:
   push:
     branches:
       - main
-      - dev
-  pull_request: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
-  actions: write
   contents: read
 
 jobs:
-#   lint:
-#     name: ⬣ ESLint
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - name: ⬇️ Checkout repo
-#         uses: actions/checkout@v4
-
-#       - name: ⎔ Setup node
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: 20
-
-#       - name: 📥 Download deps
-#         uses: bahmutov/npm-install@v1
-
-#       - name: 🖼 Build icons
-#         run: npm run build:icons
-
-#       - name: 🔬 Lint
-#         run: npm run lint
-
-#   typecheck:
-#     name: ʦ TypeScript
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - name: ⬇️ Checkout repo
-#         uses: actions/checkout@v4
-
-#       - name: ⎔ Setup node
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: 20
-
-#       - name: 📥 Download deps
-#         uses: bahmutov/npm-install@v1
-
-#       - name: 🖼 Build icons
-#         run: npm run build:icons
-
-#       - name: 🔎 Type check
-#         run: npm run typecheck --if-present
-
-#   vitest:
-#     name: ⚡ Vitest
-#     runs-on: ubuntu-22.04
-#     steps:
-#       - name: ⬇️ Checkout repo
-#         uses: actions/checkout@v4
-
-#       - name: ⎔ Setup node
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: 20
-
-#       - name: 📥 Download deps
-#         uses: bahmutov/npm-install@v1
-
-#       - name: 🏄 Copy test env vars
-#         run: cp .env.example .env
-
-#       - name: 🖼 Build icons
-#         run: npm run build:icons
-
-#       - name: ⚡ Run vitest
-#         run: npm run test -- --coverage
-
   deploy:
-    name: 🚀 Deploy
+    name: 🚀 Deploy Production
     runs-on: ubuntu-22.04
-    # only build/deploy branches on pushes
-    if: ${{ github.event_name == 'push' }}
 
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
-
-      - name: 👀 Read app name
-        uses: SebRollen/toml-action@v1.2.0
-        id: app_name
-        with:
-          file: 'fly.toml'
-          field: 'app'
 
       # move Dockerfile to root
       - name: 🚚 Move Dockerfile
@@ -107,18 +29,10 @@ jobs:
       - name: 🎈 Setup Fly
         uses: superfly/flyctl-actions/setup-flyctl@1.5
 
-      - name: 🚀 Deploy Staging
-        if: ${{ github.ref == 'refs/heads/dev' }}
-        run:
-          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }}
-          --app ${{ steps.app_name.outputs.value }}-staging
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
       - name: 🚀 Deploy Production
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run:
-          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }}
-          --build-secret SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          flyctl deploy --remote-only --build-arg "COMMIT_SHA=$GITHUB_SHA" \
+            --build-secret "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

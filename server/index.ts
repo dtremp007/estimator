@@ -106,11 +106,9 @@ app.use(
 			// NOTE: Remove reportOnly when you're ready to enforce this CSP
 			reportOnly: true,
 			directives: {
-				'connect-src': [
-					MODE === 'development' ? 'ws:' : null,
-					process.env.SENTRY_DSN ? '*.sentry.io' : null,
-					"'self'",
-				].filter(Boolean),
+				'connect-src': [MODE === 'development' ? 'ws:' : null, "'self'"].filter(
+					Boolean,
+				),
 				'font-src': ["'self'"],
 				'frame-src': ["'self'"],
 				'img-src': ["'self'", 'data:'],

@@ -31,8 +31,6 @@ jobs:
 
       - name: 🚀 Deploy Production
         run: |
-          flyctl deploy --remote-only --build-arg "COMMIT_SHA=$GITHUB_SHA" \
-            --build-secret "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN"
+          flyctl deploy --remote-only --build-arg "COMMIT_SHA=$GITHUB_SHA"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

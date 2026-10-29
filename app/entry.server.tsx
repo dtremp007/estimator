@@ -1,15 +1,9 @@
 import { PassThrough } from 'stream'
 import { createReadableStreamFromReadable } from '@react-router/node'
 
-import * as Sentry from '@sentry/node'
 import { isbot } from 'isbot'
 import { renderToPipeableStream } from 'react-dom/server'
-import {
-	type LoaderFunctionArgs,
-	type ActionFunctionArgs,
-	type HandleDocumentRequestFunction,
-	ServerRouter,
-} from 'react-router'
+import { type HandleDocumentRequestFunction, ServerRouter } from 'react-router'
 import { getEnv, init } from './utils/env.server.ts'
 import { getInstanceInfo } from './utils/litefs.server.ts'
 import { NonceProvider } from './utils/nonce-provider.ts'
@@ -24,10 +18,6 @@ export { serverContext }
 
 init()
 global.ENV = getEnv()
-
-if (ENV.MODE === 'production' && ENV.SENTRY_DSN) {
-	import('./utils/monitoring.server.ts').then(({ init }) => init())
-}
 
 type DocRequestArgs = Parameters<HandleDocumentRequestFunction>
 
@@ -101,11 +91,4 @@ export async function handleDataRequest(response: Response) {
 	response.headers.set('fly-instance', currentInstance)
 
 	return response
-}
-
-export function handleError(
-	error: unknown,
-	{ request }: LoaderFunctionArgs | ActionFunctionArgs,
-): void {
-	Sentry.captureException(error, { extra: { url: request.url } })
 }

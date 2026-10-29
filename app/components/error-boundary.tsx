@@ -1,5 +1,4 @@
-import { captureException } from '@sentry/react'
-import { useEffect, type JSX } from 'react'
+import { type JSX } from 'react'
 import {
 	type ErrorResponse,
 	isRouteErrorResponse,
@@ -27,9 +26,6 @@ export function GeneralErrorBoundary({
 	unexpectedErrorHandler?: (error: unknown) => JSX.Element | null
 }) {
 	const error = useRouteError()
-	useEffect(() => {
-		captureException(error)
-	}, [error])
 	const params = useParams()
 
 	if (typeof document !== 'undefined') {

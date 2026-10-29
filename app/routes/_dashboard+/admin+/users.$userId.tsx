@@ -34,9 +34,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
 export default function User() {
 	const data = useLoaderData<typeof loader>()
+	// Single fetch sends Dates as Date objects, which React can't render directly.
+	// ISO format renders the same on the server and in the browser.
 	const userInformation = Object.entries(data.user).map(([key, value]) => ({
 		key,
-		value,
+		value: value instanceof Date ? value.toISOString() : value,
 	}))
 
 	return (

@@ -63,6 +63,21 @@ export function cn(...inputs: ClassValue[]) {
 	return customTwMerge(clsx(inputs))
 }
 
+/**
+ * The request's path and search as the user sees it. React Router passes data
+ * requests through unchanged, so strip its `.data` suffix and internal search
+ * params before using the URL for redirects.
+ */
+export function getRequestPath(request: Request) {
+	const url = new URL(request.url)
+	const pathname = url.pathname.endsWith('/_.data')
+		? url.pathname.slice(0, -'_.data'.length)
+		: url.pathname.replace(/\.data$/, '')
+	url.searchParams.delete('index')
+	url.searchParams.delete('_routes')
+	return `${pathname || '/'}${url.search}`
+}
+
 export function getDomainUrl(request: Request) {
 	const host =
 		request.headers.get('X-Forwarded-Host') ??

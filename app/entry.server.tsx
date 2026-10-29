@@ -13,10 +13,14 @@ import {
 import { getEnv, init } from './utils/env.server.ts'
 import { getInstanceInfo } from './utils/litefs.server.ts'
 import { NonceProvider } from './utils/nonce-provider.ts'
+import { serverContext } from './utils/server-context.ts'
 import { makeTimings } from './utils/timing.server.ts'
 
 // Reject pending promises after this many ms; React aborts the render shortly after.
 export const streamTimeout = 5000
+
+// server/index.ts reads this key from the build to fill getLoadContext.
+export { serverContext }
 
 init()
 global.ENV = getEnv()
@@ -45,7 +49,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
 		? 'onAllReady'
 		: 'onShellReady'
 
-	const nonce = String(loadContext.cspNonce) ?? undefined
+	const nonce = loadContext.get(serverContext).cspNonce
 	return new Promise(async (resolve, reject) => {
 		let didError = false
 		// NOTE: this timing will only include things that are rendered in the shell

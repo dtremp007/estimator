@@ -1,6 +1,7 @@
 import { invariant } from '@epic-web/invariant'
 import { faker } from '@faker-js/faker'
 import { http } from 'msw'
+import { RouterContextProvider } from 'react-router'
 import { afterEach, expect, test } from 'vitest'
 import { twoFAVerificationType } from '#app/routes/_dashboard+/settings+/profile.two-factor.js'
 import { getSessionExpirationDate, sessionKey } from '#app/utils/auth.server.ts'
@@ -23,7 +24,7 @@ function loaderArgs(request: Request) {
 	return {
 		request,
 		params: PARAMS,
-		context: {},
+		context: new RouterContextProvider(),
 		url: new URL(request.url),
 		pattern: '/auth/:provider/callback',
 	}

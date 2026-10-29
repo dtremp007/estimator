@@ -42,7 +42,12 @@ import { ClientHintCheck, getHints, useHints } from './utils/client-hints.tsx'
 import { prisma } from './utils/db.server.ts'
 import { getEnv } from './utils/env.server.ts'
 import { honeypot } from './utils/honeypot.server.ts'
-import { combineHeaders, getDomainUrl, getUserImgSrc } from './utils/misc.tsx'
+import {
+	combineHeaders,
+	getDomainUrl,
+	getRequestPath,
+	getUserImgSrc,
+} from './utils/misc.tsx'
 import { useNonce } from './utils/nonce-provider.ts'
 import { useRequestInfo } from './utils/request-info.ts'
 import { type Theme, setTheme, getTheme } from './utils/theme.server.ts'
@@ -73,9 +78,9 @@ export const links: LinksFunction = () => {
 	].filter(Boolean)
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
+export const meta: MetaFunction<typeof loader> = ({ loaderData }) => {
 	return [
-		{ title: data ? 'ToopJetalt' : 'Error | ToopJetalt' },
+		{ title: loaderData ? 'ToopJetalt' : 'Error | ToopJetalt' },
 		{ name: 'description', content: `Simplify estimates.` },
 	]
 }
@@ -129,7 +134,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			requestInfo: {
 				hints: getHints(request),
 				origin: getDomainUrl(request),
-				path: new URL(request.url).pathname,
+				path: new URL(getRequestPath(request), request.url).pathname,
 				userPrefs: {
 					theme: getTheme(request),
 				},

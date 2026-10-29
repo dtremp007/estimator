@@ -21,7 +21,7 @@ import {
 import { requireUserId } from '#app/utils/auth.server.ts'
 import { prisma } from '#app/utils/db.server.ts'
 import { sendEmail } from '#app/utils/email.server.ts'
-import { useIsPending } from '#app/utils/misc.tsx'
+import { getRequestPath, useIsPending } from '#app/utils/misc.tsx'
 import { EmailSchema } from '#app/utils/user-validation.ts'
 import { verifySessionStorage } from '#app/utils/verification.server.ts'
 import { EmailChangeEmail } from './profile.change-email.server.tsx'
@@ -46,7 +46,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		select: { email: true },
 	})
 	if (!user) {
-		const params = new URLSearchParams({ redirectTo: request.url })
+		const params = new URLSearchParams({ redirectTo: getRequestPath(request) })
 		throw redirect(`/login?${params}`)
 	}
 	return data({ user })

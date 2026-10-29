@@ -29,7 +29,7 @@ import { Input } from '#app/components/ui/input.js'
 import { TableCell, TableRow } from '#app/components/ui/table'
 import { prisma } from '#app/utils/db.server.js'
 import 'highlight.js/styles/a11y-dark.css'
-import { formatListTimeAgo } from '#app/utils/misc.js'
+import { formatListTimeAgo, getRequestPath } from '#app/utils/misc.js'
 import { nameTheThing } from '#app/utils/naming.server.js'
 import {
 	assignPermissionsToEntity,
@@ -131,9 +131,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				printTemplates: true,
 			},
 		})
-		const requestUrl = new URL(request.url)
+		const { search } = new URL(getRequestPath(request), request.url)
 
-		return redirect(`/takeoff-models/${_takeoffModel.id}${requestUrl.search}`)
+		return redirect(`/takeoff-models/${_takeoffModel.id}${search}`)
 	}
 
 	const printTemplates = await prisma.printTemplate.findMany({

@@ -300,13 +300,16 @@ function EditName({ name }: { name?: string }) {
 }
 
 async function applyConfigurations(estimateId: string, formData: FormData) {
-	const takeoffModelId = formData.get('takeoffModelId') as string
+	const takeoffModelId = formData.get('takeoffModelId')
 	const pricelistIds = formData.getAll('pricelistId') as string[]
 
 	await prisma.estimate.update({
 		where: { id: estimateId },
 		data: {
-			takeoffModelId,
+			// Only change the model when one was submitted; never clear it implicitly
+			...(typeof takeoffModelId === 'string' && takeoffModelId
+				? { takeoffModelId }
+				: {}),
 			prices: {
 				set: [],
 				connect: pricelistIds.map(pricelistId => ({ id: pricelistId })),
@@ -333,7 +336,12 @@ function SidebarContent() {
 						<TabsTrigger value="takeoff-models">Takeoff Models</TabsTrigger>
 						<TabsTrigger value="pricelists">Pricelists</TabsTrigger>
 					</TabsList>
-					<TabsContent value="takeoff-models">
+					{/* forceMount keeps both tabs' inputs in the form so Apply submits both selections */}
+					<TabsContent
+						value="takeoff-models"
+						forceMount
+						className="data-[state=inactive]:hidden"
+					>
 						<div className="mt-4 flex flex-col gap-4 px-2">
 							{data.models.map(model => (
 								<div
@@ -390,7 +398,11 @@ function SidebarContent() {
 							</Button>
 						</div>
 					</TabsContent>
-					<TabsContent value="pricelists">
+					<TabsContent
+						value="pricelists"
+						forceMount
+						className="data-[state=inactive]:hidden"
+					>
 						<div className="space-y-4">
 							{data.pricelists.map(pricelist => (
 								<div className="flex space-x-3" key={pricelist.id}>

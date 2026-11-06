@@ -95,6 +95,12 @@
 }
 
 @layer components {
+	/* Thin, low-contrast scrollbar that blends into the background */
+	.scrollbar-subtle {
+		scrollbar-width: thin;
+		scrollbar-color: hsl(var(--border)) transparent;
+	}
+
 	.dashboard-content {
 		display: grid;
 		grid-template-columns: 1fr auto;

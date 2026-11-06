@@ -33,7 +33,7 @@ export default function Sidebar({
 		return (
 			<aside
 				className={cn(
-					'sidebar transition-width z-10 h-full w-0 overflow-y-auto overflow-x-hidden border-l border-border bg-background duration-300 ease-out',
+					'sidebar scrollbar-subtle transition-width z-10 h-full w-0 overflow-y-auto overflow-x-hidden border-l border-border bg-background duration-300 ease-out',
 					open ? 'w-96' : 'w-0',
 				)}
 			>

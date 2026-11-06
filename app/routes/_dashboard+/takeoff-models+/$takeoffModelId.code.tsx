@@ -252,7 +252,7 @@ export default function Edit() {
 									<code>getCategoryItems</code>. Saving checks the code
 									against this price list.
 								</p>
-								<ul className="max-h-[50vh] space-y-1 overflow-y-auto text-sm">
+								<ul className="scrollbar-subtle -mx-1 max-h-[50vh] space-y-0.5 overflow-y-auto text-sm">
 									{data.priceKeys.map(key => (
 										<li key={key}>
 											<button

@@ -50,7 +50,7 @@ declare class BuildingDimensions {
 	get exteriorWallSurfaceArea(): number
 
     /** Calculates the surface area of the building's exterior walls, excluding thickness of the floor */
-    get exteriorWallInteriorSurfaceArea() {}
+    get exteriorWallInteriorSurfaceArea(): number
 
 	/** Calculates the surface area of the building's interior walls. */
 	get interiorWallSurfaceArea(): number
@@ -75,22 +75,79 @@ declare class BuildingDimensions {
 }
 
 /**
- * Insert a heading into your input form.
+ * Price list item names, filled in by the code editor from the price list
+ * selected in its sidebar. Empty means "no price list selected".
  */
-declare function insertHeading(name: string, description: string): void
+interface PriceLookupKeys {}
+
+/** Price list categories, filled in the same way as `PriceLookupKeys`. */
+interface PriceCategories {}
 
 /**
- * Get the count of an input.
+ * The name of an item in the price list. Suggests the selected price list's
+ * item names, but any string is allowed.
+ */
+type PriceLookupKey = [keyof PriceLookupKeys] extends [never]
+	? string
+	: (keyof PriceLookupKeys & string) | (string & {})
+
+/** A price list category. Suggests the selected price list's categories. */
+type PriceCategory = [keyof PriceCategories] extends [never]
+	? string
+	: (keyof PriceCategories & string) | (string & {})
+
+/** An item from the price list. */
+declare type PricelistItem = {
+	name: string
+	unitType: string
+	pricePerUnit: number
+	currency: string
+	category: string
+	width?: number
+	height?: number
+	length?: number
+}
+
+/** A part to add to a section of the estimate. */
+declare type Part = {
+	/** The name shown on the estimate. */
+	name: string
+	/** How many units of the part are needed. */
+	qty: number
+	/** The name of the price list item that prices this part. */
+	priceLookupKey: PriceLookupKey
+}
+
+/**
+ * A section of the estimate, such as "Lumber" or "Plumbing". Create one with `createSection`.
+ */
+declare class EstimateSection {
+	/** The section's name. */
+	name: string
+	/**
+	 * Add a part to the section. Its price comes from the price list item
+	 * named by `priceLookupKey`. Returns the section, so calls can be chained.
+	 */
+	addPart(part: Part): EstimateSection
+}
+
+/**
+ * Insert a heading into your input form.
+ */
+declare function insertHeading(name: string, description?: string): void
+
+/**
+ * Add a number input (counter) to the form and get its value.
  */
 declare function getCount(name: string, defaultValue?: number, options?: Record<string, any>): number
 
 /**
- * Get the price of an item.
+ * Look up a price list item by name. Returns a $0 item if it isn't in the price list.
  */
-declare function getPrice(name: string): number
+declare function getPrice(name: PriceLookupKey): PricelistItem
 
 /**
- * Get a variable from the user.
+ * Get a variable for this takeoff model. Variables are values you can edit on the model's page without changing the code.
  */
 declare function getVariable<T>(
 	name: string,
@@ -99,7 +156,7 @@ declare function getVariable<T>(
 ): T
 
 /**
- * Get a user input.
+ * Add an input to the estimate form and get the value the user entered.
  */
 declare function getUserInput<T>(
 	name: string,
@@ -108,11 +165,11 @@ declare function getUserInput<T>(
 ): T
 
 /**
- * Create a section in your takeoff model.
+ * Create a section in the estimate, such as "Lumber". Add parts to it with `addPart`.
  */
-declare function createSection(name: string): void
+declare function createSection(name: string): EstimateSection
 
 /**
- * Get items from a category.
+ * Get all price list items in a category.
  */
-declare function getCategoryItems(category: string): void
+declare function getCategoryItems(category: PriceCategory): PricelistItem[]

@@ -19,6 +19,12 @@ type SidebarLayoutProps = {
 	className?: string
 	onOpenChange?: (open: boolean) => void
 	sidebarContent: React.ReactNode
+	/**
+	 * Wrap the content in a ScrollArea (default). Turn off for content that
+	 * scrolls itself, like the code editor: ScrollArea's table layout keeps it
+	 * from shrinking when the sidebar opens.
+	 */
+	scrollable?: boolean
 }
 
 export function SidebarLayout(props: SidebarLayoutProps) {
@@ -64,7 +70,11 @@ export function SidebarLayout(props: SidebarLayoutProps) {
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
-				<ScrollArea className="h-full">{props.children}</ScrollArea>
+				{props.scrollable === false ? (
+					<div className="h-full">{props.children}</div>
+				) : (
+					<ScrollArea className="h-full">{props.children}</ScrollArea>
+				)}
 			</div>
 		</>
 	)

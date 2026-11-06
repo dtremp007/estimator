@@ -122,6 +122,15 @@ export async function runAndSaveTakeoffModel(
 	return {
 		logs: takeoffApi.getLogs(),
 		takeoffModel: newTakeoffModel,
+		// Price lookups (item names and categories) that matched nothing
+		missingPrices: Array.from(
+			new Set(
+				takeoffApi.prices
+					.getLookupHistory()
+					.filter(entry => !entry.wasFound)
+					.map(entry => entry.name),
+			),
+		),
 	}
 }
 
